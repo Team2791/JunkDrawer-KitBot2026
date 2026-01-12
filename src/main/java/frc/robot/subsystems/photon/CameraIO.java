@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import frc.robot.constants.VisionConstants;
+import frc.robot.constants.VisionConstants.VisionMeasurement;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
@@ -18,16 +19,6 @@ import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 public abstract class CameraIO {
-
-    public record VisionMeasurement(
-        Pose3d estimate,
-        Matrix<N3, N1> stdDevs,
-        double timestamp
-    ) {
-        public Pose2d estimate2() {
-            return estimate.toPose2d();
-        }
-    }
 
     @AutoLog
     public static class CameraData {

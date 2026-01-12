@@ -1,7 +1,8 @@
 package frc.robot.subsystems.photon;
 
 import frc.robot.constants.VisionConstants;
-import frc.robot.util.Scheduler;
+import frc.robot.constants.VisionConstants.VisionMeasurement;
+import frc.robot.util.Periodic;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
@@ -13,19 +14,19 @@ import java.util.function.Function;
  */
 public class Photon {
 
-    final Consumer<CameraIO.VisionMeasurement> onMeasurement;
+    final Consumer<VisionMeasurement> onMeasurement;
 
     final List<CameraIO> cameras;
 
     public Photon(
-        Consumer<CameraIO.VisionMeasurement> onMeasurement,
+        Consumer<VisionMeasurement> onMeasurement,
         Function<VisionConstants.CameraConfig, CameraIO> cameraFactory,
         VisionConstants.CameraConfig... cameras
     ) {
         this.onMeasurement = onMeasurement;
         this.cameras = Arrays.stream(cameras).map(cameraFactory).toList();
 
-        Scheduler.onPeriodic(this::periodic);
+        Periodic.schedule(this::periodic);
     }
 
     public void periodic() {
@@ -38,7 +39,7 @@ public class Photon {
 
         // make vision odometry measurements
         for (CameraIO camera : cameras) {
-            CameraIO.VisionMeasurement measurement = camera.data.measurement;
+            VisionMeasurement measurement = camera.data.measurement;
             if (measurement == null) continue;
             onMeasurement.accept(measurement);
         }

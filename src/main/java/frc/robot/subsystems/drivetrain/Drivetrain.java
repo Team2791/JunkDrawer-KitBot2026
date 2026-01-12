@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.constants.ControlConstants;
 import frc.robot.constants.IOConstants;
 import frc.robot.constants.SwerveConstants;
+import frc.robot.constants.VisionConstants.VisionMeasurement;
 import frc.robot.subsystems.drivetrain.gyro.GyroIO;
 import frc.robot.subsystems.drivetrain.module.ModuleIO;
 import frc.robot.subsystems.photon.CameraIO;
@@ -307,7 +308,7 @@ public class Drivetrain extends SubsystemBase {
      * Add a vision measurement
      * @param measurement The vision measurement to add.
      */
-    public void addVisionMeasurement(CameraIO.VisionMeasurement measurement) {
+    public void addVisionMeasurement(VisionMeasurement measurement) {
         odometry.addVisionMeasurement(
             measurement.estimate2(),
             measurement.timestamp(),

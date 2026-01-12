@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.autos.AutoManager;
 import frc.robot.commands.util.FunctionWrapper;
 import frc.robot.constants.IOConstants;
+import frc.robot.constants.VisionConstants;
 import frc.robot.subsystems.drivetrain.Drivetrain;
 import frc.robot.subsystems.drivetrain.gyro.GyroReplay;
 import frc.robot.subsystems.drivetrain.gyro.NavX;
@@ -15,6 +16,7 @@ import frc.robot.subsystems.drivetrain.module.ModuleSpark;
 import frc.robot.subsystems.photon.CameraPhoton;
 import frc.robot.subsystems.photon.CameraReplay;
 import frc.robot.subsystems.photon.Photon;
+import frc.robot.subsystems.quest.Quest;
 import frc.robot.util.AdvantageUtil;
 import frc.robot.util.Alerter;
 
@@ -32,8 +34,11 @@ public class RobotContainer {
 
     final Photon photon = new Photon(
         drivetrain::addVisionMeasurement,
-        AdvantageUtil.match(CameraPhoton::new, CameraReplay::new)
+        AdvantageUtil.match(CameraPhoton::new, CameraReplay::new),
+        VisionConstants.CameraConfig.kCamera
     );
+
+    final Quest quest = new Quest(drivetrain::addVisionMeasurement);
 
     // autos
     final AutoManager autoManager = new AutoManager(drivetrain);
