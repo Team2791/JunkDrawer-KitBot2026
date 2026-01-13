@@ -48,7 +48,7 @@ public abstract class CameraIO {
     }
 
     /** Logged data from this camera. */
-    public final CameraData data = new CameraData();
+    public final CameraDataAutoLogged data = new CameraDataAutoLogged();
 
     /** Configuration for this camera (name, position, etc.). */
     public final VisionConstants.CameraConfig config;

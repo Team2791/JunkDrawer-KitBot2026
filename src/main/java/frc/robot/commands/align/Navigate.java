@@ -179,7 +179,7 @@ public abstract class Navigate extends Command {
     public final void execute() {
         if (currentTarget == null) return;
 
-        Pose2d robot = drivetrain.getPose();
+        Pose2d robot = drivetrain.pose();
         // Calculate speeds using holonomic controller
         // Period (0.01s) is approximate for WPILib timing
         // Target rotation is used as the desired angular velocity direction
@@ -190,7 +190,7 @@ public abstract class Navigate extends Command {
             currentTarget.getRotation()
         );
         // Send field-relative speeds (controller output is in field coordinates)
-        drivetrain.drive(speeds, Drivetrain.FieldRelativeMode.kOff);
+        drivetrain.set(speeds);
     }
 
     /**

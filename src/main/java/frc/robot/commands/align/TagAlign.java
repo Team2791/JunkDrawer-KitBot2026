@@ -121,7 +121,7 @@ public abstract class TagAlign extends SequentialCommandGroup {
 
         if (targetIds == null) return;
 
-        Pose2d robotPose = drivetrain.getPose();
+        Pose2d robotPose = drivetrain.pose();
         Pose2d tagPose = null;
 
         // Find the nearest tag from the valid target list

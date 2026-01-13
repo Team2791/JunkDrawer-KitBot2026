@@ -138,11 +138,9 @@ public class ModuleSpark extends ModuleIO {
     public void update() {
         // Update drive motor data
         this.data.driveConnected = driveMotor.getLastError() == REVLibError.kOk;
-        // Convert encoder rotations to meters using wheel radius
         this.data.drivePosition = Meters.of(
             driveEncoder.getPosition() * SwerveConstants.Wheel.kRadius
         );
-        // Convert encoder RPM to linear velocity in meters/second
         this.data.driveVelocity = MetersPerSecond.of(
             driveEncoder.getVelocity() * SwerveConstants.Wheel.kRadius
         );
@@ -154,8 +152,6 @@ public class ModuleSpark extends ModuleIO {
 
         // Update turn motor data
         this.data.turnConnected = turnMotor.getLastError() == REVLibError.kOk;
-        // Get absolute encoder position and subtract the module's angular offset
-        // (offset calibrates encoder zero to desired forward direction)
         this.data.turnPosition = Radians.of(
             turnEncoder.getPosition() - id.angularOffset()
         );

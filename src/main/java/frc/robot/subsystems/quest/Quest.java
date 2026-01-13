@@ -5,11 +5,13 @@ import static frc.robot.constants.VisionConstants.kQuestDevs;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.constants.VisionConstants.VisionMeasurement;
-import frc.robot.util.Periodic;
 import gg.questnav.questnav.PoseFrame;
-import gg.questnav.questnav.QuestNav;
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.Consumer;
+import org.littletonrobotics.junction.Logger;
 
 /**
  * QuestNav vision subsystem for Meta Quest-based pose estimation.
@@ -29,7 +31,7 @@ import java.util.function.Consumer;
 public class Quest {
 
     /** The QuestNav instance for pose tracking. */
-    final QuestNav quest;
+    final QuestIO quest;
 
     /** Callback to send vision measurements to the drivetrain. */
     final Consumer<VisionMeasurement> addMeasurement;
@@ -42,12 +44,9 @@ public class Quest {
      *
      * @param addMeasurement Callback for reporting vision measurements
      */
-    public Quest(Consumer<VisionMeasurement> addMeasurement) {
-        this.quest = new QuestNav();
+    public Quest(QuestIO quest, Consumer<VisionMeasurement> addMeasurement) {
+        this.quest = quest;
         this.addMeasurement = addMeasurement;
-
-        // Register periodic update with command scheduler
-        Periodic.schedule(this::update);
     }
 
     /**
@@ -66,7 +65,24 @@ public class Quest {
         Pose3d quest = bot.transformBy(kBotToQuest);
 
         // Update Quest's pose estimate
-        this.quest.setPose(quest);
+        this.quest.reset(quest);
+    }
+
+    /**
+     * Get the latest heading from the Quest device.
+     * @return The latest heading, if available
+     */
+    public Optional<Rotation2d> heading() {
+        PoseFrame[] frames = this.quest.data.readings;
+        PoseFrame[] tracking = Arrays.stream(frames)
+            .filter(PoseFrame::isTracking)
+            .toArray(PoseFrame[]::new);
+
+        if (tracking.length == 0) return Optional.empty();
+
+        return Optional.of(
+            tracking[tracking.length - 1].questPose3d().toPose2d().getRotation()
+        );
     }
 
     /**
@@ -75,9 +91,15 @@ public class Quest {
      * Retrieves new pose frames from the Quest device and converts them to
      * vision measurements for the drivetrain's odometry system.
      */
-    void update() {
+    public void update() {
+        // Refresh Quest data
+        this.quest.update();
+
+        // Record all outputs
+        Logger.processInputs("Quest", this.quest.data);
+
         // Get all new pose frames from Quest since last update
-        PoseFrame[] frames = this.quest.getAllUnreadPoseFrames();
+        PoseFrame[] frames = this.quest.data.readings;
         if (frames.length == 0) return;
 
         // Process each pose frame

@@ -1,6 +1,6 @@
 package frc.robot.constants;
 
-// import com.studica.frc.AHRS.NavXComType;
+import com.studica.frc.AHRS.NavXComType;
 
 /**
  * Input/Output port assignments and hardware interface constants.
@@ -19,7 +19,8 @@ public final class IOConstants {
      * TODO: May need MXP SPI connection instead of USB1 depending on NavX mounting.
      */
     public static final class Drivetrain {
-        // public static final NavXComType kGyroPort = NavXComType.kUSB1; // TODO: Season: may need MXP_SPI
+
+        public static final NavXComType kGyroPort = NavXComType.kUSB1; // TODO: Season: may need MXP_SPI
     }
 
     /**

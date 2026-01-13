@@ -1,24 +1,23 @@
 package frc.robot;
 
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.autos.AutoManager;
 import frc.robot.commands.util.FunctionWrapper;
 import frc.robot.constants.IOConstants;
-import frc.robot.constants.VisionConstants;
 import frc.robot.subsystems.drivetrain.Drivetrain;
 import frc.robot.subsystems.drivetrain.gyro.GyroReplay;
 import frc.robot.subsystems.drivetrain.gyro.NavX;
 import frc.robot.subsystems.drivetrain.module.ModuleReplay;
 import frc.robot.subsystems.drivetrain.module.ModuleSpark;
-import frc.robot.subsystems.photon.CameraPhoton;
-import frc.robot.subsystems.photon.CameraReplay;
-import frc.robot.subsystems.photon.Photon;
-import frc.robot.subsystems.quest.Quest;
+import frc.robot.subsystems.quest.Meta3S;
+import frc.robot.subsystems.quest.QuestReplay;
 import frc.robot.util.AdvantageUtil;
 import frc.robot.util.Alerter;
+import frc.robot.util.AllianceUtil;
 
 /**
  * This class is responsible for binding the controls on the driver and operator controllers
@@ -37,19 +36,10 @@ public class RobotContainer {
 
     /** Swerve drivetrain subsystem - handles robot movement and odometry */
     final Drivetrain drivetrain = new Drivetrain(
+        AdvantageUtil.match(ModuleSpark::new, ModuleReplay::new),
         AdvantageUtil.match(NavX::new, GyroReplay::new),
-        AdvantageUtil.match(ModuleSpark::new, ModuleReplay::new)
+        AdvantageUtil.match(Meta3S::new, QuestReplay::new)
     );
-
-    /** Photon vision subsystem - handles camera-based pose estimation */
-    final Photon photon = new Photon(
-        drivetrain::addVisionMeasurement,
-        AdvantageUtil.match(CameraPhoton::new, CameraReplay::new),
-        VisionConstants.CameraConfig.kCamera
-    );
-
-    /** Quest vision subsystem - handles secondary vision processing */
-    final Quest quest = new Quest(drivetrain::addVisionMeasurement);
 
     /** Autonomous mode manager - handles auto command selection and execution */
     final AutoManager autoManager = new AutoManager(drivetrain);
@@ -112,7 +102,13 @@ public class RobotContainer {
         driverctl
             .start()
             .onTrue(
-                new FunctionWrapper(drivetrain::resetGyro).ignoringDisable(true)
+                new FunctionWrapper(() -> {
+                    // SAFETY: we know DS is connected if we're receiving button presses
+                    drivetrain.reset(
+                        AllianceUtil.unsafe.autoflip(new Rotation2d())
+                    );
+                })
+                    .ignoringDisable(true)
             );
     }
 

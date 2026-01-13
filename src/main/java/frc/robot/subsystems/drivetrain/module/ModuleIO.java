@@ -72,7 +72,8 @@ public abstract class ModuleIO {
     }
 
     /** Current sensor readings for this module. */
-    public final ModuleData data = new ModuleData();
+    public final ModuleDataAutoLogged data = new ModuleDataAutoLogged();
+
     /** Unique identifier for this module (FL, FR, RL, or RR). */
     public final SwerveConstants.Module id;
 

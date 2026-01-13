@@ -75,8 +75,8 @@ public class AutoManager {
     public AutoManager(Drivetrain drivetrain) {
         this.drivetrain = drivetrain;
         this.factory = new AutoFactory(
-            drivetrain::getPose,
-            drivetrain::resetPose,
+            drivetrain::pose,
+            drivetrain::reset,
             this::follow,
             true,
             drivetrain,
@@ -130,7 +130,7 @@ public class AutoManager {
      */
     public void follow(SwerveSample sample) {
         // get current pose
-        Pose2d pose = drivetrain.getPose();
+        Pose2d pose = drivetrain.pose();
         Pose2d wants = sample.getPose();
 
         Logger.recordOutput("Auto/CurrentPose", pose);
@@ -147,7 +147,7 @@ public class AutoManager {
         );
 
         // field-relative drive
-        drivetrain.drive(speeds, Drivetrain.FieldRelativeMode.kFixedOrigin);
+        drivetrain.drive(speeds);
     }
 
     /**

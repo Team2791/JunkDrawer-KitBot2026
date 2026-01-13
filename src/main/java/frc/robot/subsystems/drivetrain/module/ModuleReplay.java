@@ -7,13 +7,9 @@ import frc.robot.constants.SwerveConstants;
  *
  * <p>This class is used when replaying recorded robot data from AdvantageKit logs.
  * It does not interact with any real hardware or simulation - all module data
- * (positions, velocities, currents) is read directly from logged {@link ModuleData}.
+ * is read directly from logged {@link ModuleData}.
  *
- * <p>All methods are no-ops because:
- * <ul>
- *   <li>{@link #update()}: Sensor data is automatically populated from logs
- *   <li>{@link #setStateSetpoint}: Commands are ignored (replayed data is immutable)
- * </ul>
+ * <p>All methods are no-ops because all replayed data is immutable.
  */
 public class ModuleReplay extends ModuleIO {
 

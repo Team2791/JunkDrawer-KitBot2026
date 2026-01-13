@@ -1,12 +1,13 @@
 package frc.robot.subsystems.photon;
 
 import frc.robot.constants.VisionConstants;
+import frc.robot.constants.VisionConstants.CameraConfig;
 import frc.robot.constants.VisionConstants.VisionMeasurement;
-import frc.robot.util.Periodic;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import org.littletonrobotics.junction.Logger;
 
 /**
  * Photon vision subsystem for camera-based pose estimation.
@@ -40,19 +41,17 @@ public class Photon {
      * Registers a periodic callback to update the cameras each robot tick.
      *
      * @param onMeasurement Callback to invoke when a measurement is ready
-     * @param cameraFactory Factory function to create camera implementations
+     * @param factory Factory function to create camera implementations
      * @param cameras Configurations for all cameras to be managed
      */
     public Photon(
         Consumer<VisionMeasurement> onMeasurement,
-        Function<VisionConstants.CameraConfig, CameraIO> cameraFactory,
-        VisionConstants.CameraConfig... cameras
+        Function<VisionConstants.CameraConfig, CameraIO> factory
     ) {
         this.onMeasurement = onMeasurement;
-        this.cameras = Arrays.stream(cameras).map(cameraFactory).toList();
-
-        // Register periodic update with the command scheduler
-        Periodic.schedule(this::periodic);
+        this.cameras = Arrays.stream(CameraConfig.values())
+            .map(factory)
+            .toList();
     }
 
     /**
@@ -61,12 +60,17 @@ public class Photon {
      * Updates all cameras and reports any new vision measurements to the listener.
      * This allows the drivetrain to incorporate vision data into its pose estimate.
      */
-    public void periodic() {
+    public void update() {
         // Update all camera measurements
         this.cameras.forEach(CameraIO::update);
 
         // Process vision measurements from each camera
         for (CameraIO camera : cameras) {
+            Logger.processInputs(
+                String.format("Camera/%s", camera.config.name),
+                camera.data
+            );
+
             VisionMeasurement measurement = camera.data.measurement;
 
             // Only report valid measurements

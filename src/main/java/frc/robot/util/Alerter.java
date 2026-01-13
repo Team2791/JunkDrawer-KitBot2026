@@ -2,6 +2,7 @@ package frc.robot.util;
 
 import com.revrobotics.REVLibError;
 import com.revrobotics.spark.SparkBase;
+import com.studica.frc.AHRS;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Notifier;
@@ -204,7 +205,7 @@ public class Alerter {
     /**
      * Registers a REV Spark motor controller for error monitoring.
      *
-     * The controller will be checked periodically for errors, and any new errors
+     * <p>The controller will be checked periodically for errors, and any new errors
      * will trigger a notification on the Elastic dashboard.
      *
      * @param name Human-readable name for the motor (e.g., "Drive Left Front")
@@ -218,6 +219,23 @@ public class Alerter {
                 SparkBase::getLastError,
                 Alerter::serialize,
                 new ArrayList<>(List.of(REVLibError.kOk))
+            )
+        );
+    }
+
+    /**
+     * Registers a gyroscope for error monitoring.
+     *
+     * <p>See {@link #register(String, SparkBase)} for details.
+     */
+    public void register(AHRS gyro) {
+        devices.add(
+            new Device<>(
+                gyro,
+                "Gyro",
+                AHRS::isConnected,
+                x -> x ? "" : "Disconnected",
+                new ArrayList<>(List.of(true))
             )
         );
     }

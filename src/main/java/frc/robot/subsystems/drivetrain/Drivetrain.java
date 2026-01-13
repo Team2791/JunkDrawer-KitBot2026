@@ -1,5 +1,7 @@
 package frc.robot.subsystems.drivetrain;
 
+import static frc.robot.constants.SwerveConstants.*;
+
 import edu.wpi.first.hal.FRCNetComm;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
@@ -10,22 +12,31 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.constants.ControlConstants;
 import frc.robot.constants.IOConstants;
-import frc.robot.constants.SwerveConstants;
+import frc.robot.constants.SwerveConstants.Module;
 import frc.robot.constants.VisionConstants.VisionMeasurement;
 import frc.robot.subsystems.drivetrain.gyro.GyroIO;
 import frc.robot.subsystems.drivetrain.module.ModuleIO;
+import frc.robot.subsystems.photon.CameraPhoton;
+import frc.robot.subsystems.photon.CameraReplay;
+import frc.robot.subsystems.photon.Photon;
+import frc.robot.subsystems.quest.Quest;
+import frc.robot.subsystems.quest.QuestIO;
 import frc.robot.util.AdvantageUtil;
 import frc.robot.util.AllianceUtil;
 import frc.robot.util.IterUtil;
 import frc.robot.util.RateLimiter;
 import frc.robot.util.Vec2;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -74,6 +85,16 @@ public class Drivetrain extends SubsystemBase {
     /** Rate limiter for controlling acceleration on drive inputs. */
     final RateLimiter slew;
 
+    /** The Meta Quest 3S, our primary vision tool */
+    final Quest quest;
+
+    /** PhotonVision, to callibrate the starting pose of the quest */
+    final List<VisionMeasurement> callibrators = new ArrayList<>();
+    final Photon photon = new Photon(
+        this.callibrators::add,
+        AdvantageUtil.match(CameraPhoton::new, CameraReplay::new)
+    );
+
     /**
      * Constructs a new Drivetrain subsystem.
      *
@@ -84,20 +105,22 @@ public class Drivetrain extends SubsystemBase {
      * @param moduleFactory A factory function that creates swerve modules based on their configuration
      */
     public Drivetrain(
+        Function<Module, ModuleIO> moduleFactory,
         GyroIO gyro,
-        Function<SwerveConstants.Module, ModuleIO> moduleFactory
+        QuestIO quest
     ) {
         this.gyro = gyro;
+        this.quest = new Quest(quest, this::addVisionMeasurement);
 
         // Create all four swerve modules using the factory
-        frontLeft = moduleFactory.apply(SwerveConstants.Module.kFrontLeft);
-        frontRight = moduleFactory.apply(SwerveConstants.Module.kFrontRight);
-        rearLeft = moduleFactory.apply(SwerveConstants.Module.kRearLeft);
-        rearRight = moduleFactory.apply(SwerveConstants.Module.kRearRight);
+        frontLeft = moduleFactory.apply(Module.kFrontLeft);
+        frontRight = moduleFactory.apply(Module.kFrontRight);
+        rearLeft = moduleFactory.apply(Module.kRearLeft);
+        rearRight = moduleFactory.apply(Module.kRearRight);
 
         // Initialize the pose estimator with current module positions
         odometry = new SwerveDrivePoseEstimator(
-            SwerveConstants.kKinematics,
+            kKinematics,
             gyro.heading(),
             modulePositions(),
             new Pose2d()
@@ -146,7 +169,7 @@ public class Drivetrain extends SubsystemBase {
             builder.addDoubleProperty(
                 "Robot Angle",
                 () -> {
-                    Rotation2d ang = getHeading();
+                    Rotation2d ang = heading();
                     Rotation2d fixed = AllianceUtil.autoflip(ang).orElse(ang);
                     return fixed.getRadians();
                 },
@@ -154,7 +177,7 @@ public class Drivetrain extends SubsystemBase {
             );
         });
 
-        // Register with AdvantageKit for automatic logging
+        // Register with AdvantageKit
         AutoLogOutputManager.addObject(this);
         HAL.report(
             FRCNetComm.tResourceType.kResourceType_RobotDrive,
@@ -164,7 +187,6 @@ public class Drivetrain extends SubsystemBase {
 
     /**
      * Gets all swerve modules on the robot.
-     *
      * @return An array of all modules in order: [frontLeft, frontRight, rearLeft, rearRight]
      */
     public ModuleIO[] modules() {
@@ -204,23 +226,41 @@ public class Drivetrain extends SubsystemBase {
      */
     @AutoLogOutput
     public ChassisSpeeds getChassisSpeeds() {
-        return SwerveConstants.kKinematics.toChassisSpeeds(moduleStates());
+        return kKinematics.toChassisSpeeds(moduleStates());
     }
 
-    /** @param speeds The desired speeds for the robot to move at */
-    private void setDesiredSpeeds(ChassisSpeeds speeds) {
+    /**
+     * Commands robot-relative swerve drive with specified speeds.
+     *
+     * <p>See {@link #drive(ChassisSpeeds)} for field-relative driving.
+     *
+     * @param speeds The desired speeds for the robot to move at
+     */
+    public void set(ChassisSpeeds speeds) {
+        // Convert to velocity vector for speed limiting
+        Vec2 vel = new Vec2(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+
+        // Limit to maximum linear speed.
+        // Can't limit components because, e.g., <100%X, 100%Y> = sqrt(2)*100% total speed.
+        if (vel.mag() > MaxSpeed.kLinear) {
+            vel = vel.norm().mul(MaxSpeed.kLinear);
+            speeds.vxMetersPerSecond = vel.x;
+            speeds.vyMetersPerSecond = vel.y;
+        }
+
+        // Limit to maximum angular speed
+        if (speeds.omegaRadiansPerSecond > MaxSpeed.kAngular) {
+            speeds.omegaRadiansPerSecond = MaxSpeed.kAngular;
+        }
+
         // Discretize speeds for more accurate control (matches 20ms robot tick)
         ChassisSpeeds discrete = ChassisSpeeds.discretize(speeds, 0.02);
 
         // Convert chassis speeds to individual module states
-        SwerveModuleState[] states =
-            SwerveConstants.kKinematics.toSwerveModuleStates(discrete);
+        SwerveModuleState[] states = kKinematics.toSwerveModuleStates(discrete);
 
         // Ensure all wheels are commanded within maximum speed
-        SwerveDriveKinematics.desaturateWheelSpeeds(
-            states,
-            SwerveConstants.MaxSpeed.kLinear
-        );
+        SwerveDriveKinematics.desaturateWheelSpeeds(states, MaxSpeed.kLinear);
 
         // Log for debugging and analysis
         Logger.recordOutput("Drivetrain/StateSetpoints", states);
@@ -242,123 +282,63 @@ public class Drivetrain extends SubsystemBase {
      * @return The robot's current pose (x, y, rotation)
      */
     @AutoLogOutput
-    public Pose2d getPose() {
+    public Pose2d pose() {
         return odometry.getEstimatedPosition();
-    }
-
-    /**
-     * Resets the robot's pose to a specific value.
-     *
-     * Useful at the start of autonomous or when absolute position knowledge is needed.
-     *
-     * @param pose The new pose for the robot
-     */
-    public void resetPose(Pose2d pose) {
-        odometry.resetPosition(gyro.heading(), modulePositions(), pose);
     }
 
     /**
      * Gets the robot's current heading (rotation).
      *
-     * Equivalent to getPose().getRotation() but slightly more convenient.
+     * Equivalent to {@link #pose()}.getRotation() but slightly more convenient.
      *
      * @return The robot's rotation angle
      */
-    public Rotation2d getHeading() {
-        return getPose().getRotation();
+    public Rotation2d heading() {
+        return pose().getRotation();
     }
 
     /**
-     * Commands swerve drive with specified speeds and frame of reference.
+     * Commands swerve drive, field-relative with specified speeds.
      *
-     * <p>Supports multiple coordinate frames:
-     * <ul>
-     *   <li>{@code kFixedOrigin}: Field-relative with fixed coordinate system
-     *   <li>{@code kAllianceOrigin}: Field-relative with alliance-aware coordinate system (recommended)
-     *   <li>{@code kOff}: Robot-relative (no field rotation applied)
-     * </ul>
-     *
-     * @param speeds The desired chassis speeds
-     * @param fieldRelative The reference frame for the speeds
-     */
-    public void drive(ChassisSpeeds speeds, FieldRelativeMode fieldRelative) {
-        switch (fieldRelative) {
-            case kFixedOrigin -> setDesiredSpeeds(
-                ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getHeading())
-            );
-            case kAllianceOrigin -> setDesiredSpeeds(
-                ChassisSpeeds.fromFieldRelativeSpeeds(
-                    speeds.vxMetersPerSecond * AllianceUtil.sign().orElse(1),
-                    speeds.vyMetersPerSecond * AllianceUtil.sign().orElse(1),
-                    speeds.omegaRadiansPerSecond,
-                    getHeading()
-                )
-            );
-            case kOff -> setDesiredSpeeds(speeds);
-        }
-    }
-
-    /**
-     * Commands field-relative swerve drive with alliance-aware coordinates.
-     *
-     * This is the default drive mode and accounts for alliance-specific field orientation.
+     * <p>Use {@link #set(ChassisSpeeds)} for robot-relative driving.
      *
      * @param speeds The desired chassis speeds
      */
     public void drive(ChassisSpeeds speeds) {
-        drive(speeds, FieldRelativeMode.kAllianceOrigin);
+        set(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, heading()));
     }
 
     /**
-     * Commands swerve drive with manual power inputs (normalized to [-1, 1]).
+     * Commands swerve drive with power inputs (normalized to [-1, 1]).
      *
-     * @param pow The X and Y power inputs ([-1, 1])
-     * @param rotPower The rotational power input ([-1, 1])
-     * @param fieldRelative The reference frame for the powers
-     */
-    public void drive(
-        Vec2 pow,
-        double rotPower,
-        FieldRelativeMode fieldRelative
-    ) {
-        // Normalize inputs if magnitude exceeds 1.0
-        if (pow.mag() > 1) pow = pow.norm();
-
-        // Scale to maximum velocities
-        Vec2 vel = pow.mul(SwerveConstants.MaxSpeed.kLinear);
-        double rot = rotPower * SwerveConstants.MaxSpeed.kAngular;
-
-        drive(new ChassisSpeeds(vel.x, vel.y, rot), fieldRelative);
-    }
-
-    /**
-     * Commands field-relative swerve drive with manual power inputs.
+     * <p>Supports field-relative driving. See {@link #set(ChassisSpeeds)} for robot-relative driving.
      *
      * @param pow The X and Y power inputs ([-1, 1])
      * @param rotPower The rotational power input ([-1, 1])
      */
     public void drive(Vec2 pow, double rotPower) {
-        drive(pow, rotPower, FieldRelativeMode.kAllianceOrigin);
+        // Normalize inputs if magnitude exceeds 1.0
+        if (pow.mag() > 1) pow = pow.norm();
+
+        // Scale to maximum velocities
+        Vec2 vel = pow.mul(MaxSpeed.kLinear);
+        double rot = rotPower * MaxSpeed.kAngular;
+
+        drive(new ChassisSpeeds(vel.x, vel.y, rot));
     }
 
     /**
      * Commands swerve drive from an Xbox controller.
      *
-     * Applies deadband, rate limiting, and power scaling to controller inputs.
-     * Handles the controller coordinate system (x-right, y-down) to robot system conversion.
-     *
-     * The controller inputs are squared to give more fine control at low speeds while
-     * maintaining full responsiveness at high speeds.
-     *
      * @param controller The Xbox controller to read input from
      */
     public void drive(CommandXboxController controller) {
-        // Get controller inputs with deadband applied
-        double xspeed = MathUtil.applyDeadband(
+        // Apply deadband to joystick inputs
+        double xpow = MathUtil.applyDeadband(
             controller.getLeftX(),
             IOConstants.Controller.kDeadband
         );
-        double yspeed = MathUtil.applyDeadband(
+        double ypow = MathUtil.applyDeadband(
             controller.getLeftY(),
             IOConstants.Controller.kDeadband
         );
@@ -367,17 +347,14 @@ public class Drivetrain extends SubsystemBase {
             IOConstants.Controller.kDeadband
         );
 
+        Vec2 input = new Vec2(xpow, ypow);
+
+        // Apply squared inputs for finer low-speed control
+        Vec2 input2 = input.mul(input.abs());
+        double rot2 = rot * Math.abs(rot);
+
         // Apply rate limiting for smooth acceleration
-        RateLimiter.Outputs outputs = slew.calculate(
-            new Vec2(xspeed, yspeed),
-            rot
-        );
-
-        // Square rotation while preserving sign for control response
-        double rot2 = Math.pow(outputs.rot(), 2) * Math.signum(outputs.rot());
-
-        // Square velocity while preserving sign
-        Vec2 vel2 = outputs.vel().powi(2).mul(outputs.vel().sign());
+        RateLimiter.Outputs limited = slew.calculate(input2, rot2);
 
         /*
          * Controller to WPI coordinate system conversion:
@@ -392,18 +369,7 @@ public class Drivetrain extends SubsystemBase {
          *   +Yc -> -Xw  (down stick -> forward motion negation)
          *   +Rotc -> -Rotw (negate rotation for ccw-positive)
          */
-        drive(new Vec2(-vel2.y, -vel2.x), -rot2);
-    }
-
-    /**
-     * Resets the gyroscope heading to absolute zero (corrected for alliance if applicable).
-     * After calling this, the robot will consider its current facing direction as "aligned" with the field.
-     * SAFETY: This method assumes FMS/DS has been connected at least once.
-     */
-    public void resetGyro() {
-        // SAFETY: This method is only called in response to driver input,
-        // which means DS has reported alliance by this point.
-        gyro.reset(AllianceUtil.unsafe.autoflip(new Rotation2d()));
+        drive(new Vec2(-limited.vel().y, -limited.vel().x), -limited.rot());
     }
 
     /**
@@ -435,6 +401,71 @@ public class Drivetrain extends SubsystemBase {
     }
 
     /**
+     * Callibrate the initial pose of the robot
+     *
+     * Photon/AprilTag measurements are recorded and collected while the robot is disabled.
+     * Once enabled, we average the latest few measurements and set our starting pose to that.
+     */
+    void callibrate() {
+        if (callibrators.isEmpty()) return;
+
+        // Average all callibrator measurements
+        double x = 0;
+        double y = 0;
+        double sin = 0;
+        double cos = 0;
+
+        for (VisionMeasurement vm : callibrators) {
+            double age = Timer.getFPGATimestamp() - vm.timestamp();
+            if (age > 15) continue; // Ignore old measurements
+
+            Pose2d est = vm.estimate2();
+
+            x += est.getX();
+            y += est.getY();
+            sin += est.getRotation().getSin();
+            cos += est.getRotation().getCos();
+        }
+
+        int n = callibrators.size();
+
+        x /= n;
+        y /= n;
+        sin /= n;
+        cos /= n;
+
+        Pose2d avg = new Pose2d(x, y, new Rotation2d(sin, cos));
+
+        // Reset odometry and gyro to the averaged pose
+        reset(avg);
+
+        // Clear callibrators for next use
+        callibrators.clear();
+    }
+
+    /**
+     * Resets all of the drivetrain's sensors to the specified pose.
+     *
+     * @param pose The new pose to set
+     */
+    public void reset(Pose2d pose) {
+        gyro.reset(pose.getRotation());
+        quest.reset(pose);
+        odometry.resetPosition(pose.getRotation(), modulePositions(), pose);
+    }
+
+    /**
+     * Resets all of the drivetrain's sensors to the specified rotation.
+     *
+     * @param rotation The new rotation to set
+     */
+    public void reset(Rotation2d rotation) {
+        Pose2d current = pose();
+        Pose2d next = new Pose2d(current.getTranslation(), rotation);
+        reset(next);
+    }
+
+    /**
      * Periodic update method called every 20ms.
      *
      * <p>Updates all drivetrain components and logs data for analysis:
@@ -448,14 +479,34 @@ public class Drivetrain extends SubsystemBase {
      */
     @Override
     public void periodic() {
-        // Update sensor readings
+        // Collect updates when disabled; callibrate once enabled.
+        // although callibrate() is called many times, it only acts once
+        // since we clear the callibrators list at the end of the method.
+        if (DriverStation.isDisabled()) photon.update();
+        else callibrate();
+
+        // Update other subsystems
+        quest.update();
         gyro.update();
         Arrays.stream(modules()).forEach(ModuleIO::update);
 
-        // Get robot heading from gyro (use zero if disconnected)
-        Rotation2d heading = gyro.data.connected
-            ? gyro.heading()
-            : new Rotation2d();
+        // Record gyro heading
+        Logger.processInputs("Drivetrain/Gyro", gyro.data);
+        Arrays.stream(modules()).forEach(module -> {
+            Logger.processInputs(
+                "Drivetrain/Module/%d".formatted(module.id.value),
+                module.data
+            );
+        });
+
+        Rotation2d heading;
+        Rotation2d est = quest.heading().orElse(null);
+
+        // Prefer gyro if connected, else fall back to Quest heading
+        // If neither is available, use zero
+        if (gyro.data.connected) heading = gyro.heading();
+        else if (est != null) heading = est;
+        else heading = new Rotation2d();
 
         // Update odometry with latest measurements
         try {
@@ -471,19 +522,5 @@ public class Drivetrain extends SubsystemBase {
 
         // Update dashboard field display
         SmartDashboard.putData("Field", field);
-    }
-
-    /**
-     * Enum defining different coordinate frame options for drive commands.
-     */
-    public enum FieldRelativeMode {
-        /** Robot-centric: no field rotation applied */
-        kOff,
-
-        /** Field-relative with fixed coordinate system origin */
-        kFixedOrigin,
-
-        /** Field-relative with alliance-aware coordinate system (recommended) */
-        kAllianceOrigin,
     }
 }

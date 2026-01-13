@@ -125,7 +125,7 @@ public final class ControlConstants {
         /** Maximum angular acceleration during alignment (radians/second²). */
         public static final double kMaxTurnAcceleration = kTau;
 
-        /** Position and rotation tolerance for "at target" detection. TODO: May need adjustment for shooter vs P&P. */
+        /** Position and rotation tolerance for "at target" detection. TODO: May need adjustment for shooter vs PnP. */
         public static final Pose2d kTolerance = new Pose2d(
             0.03,
             0.03,

@@ -174,6 +174,15 @@ public class Vec2 {
     }
 
     /**
+     * Returns the component-wise absolute value of this vector.
+     *
+     * @return A new Vec2 with each component set to its absolute value
+     */
+    public Vec2 abs() {
+        return new Vec2(Math.abs(this.x), Math.abs(this.y));
+    }
+
+    /**
      * Applies a function to both components of this vector.
      *
      * @param f The function to apply to each component
