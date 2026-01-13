@@ -12,19 +12,50 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * Monitors hardware devices for errors and provides alerts to the driver and operator.
+ *
+ * <p>This singleton class:
+ * <ul>
+ *   <li>Tracks registered devices (motors, sensors, etc.) and their error states
+ *   <li>Sends notifications to the Elastic dashboard when hardware fails
+ *   <li>Provides controller vibration feedback for important events
+ *   <li>Only monitors devices when running on real robots (not in replay mode)
+ * </ul>
+ *
+ * <p>The alerting system is one-shot per error type, meaning each unique error is only
+ * reported once to avoid flooding the dashboard with repeated notifications.
+ */
 public class Alerter {
 
+    /**
+     * Internal record representing a monitored device and its error state.
+     *
+     * @param <T> The device type
+     * @param <E> The error type for this device
+     */
     record Device<T, E>(
+        /** The device instance being monitored. */
         T device,
+        /** Human-readable name of the device. */
         String name,
+        /** Function to extract the current error state from the device. */
         Function<T, E> error,
+        /** Function to convert an error to a human-readable description. */
         Function<E, String> serialize,
+        /** List of errors that have already been reported (to avoid duplicates). */
         ArrayList<E> signaled
     ) {
+        /**
+         * Checks the device for a new error and alerts if one is found.
+         *
+         * Only reports each unique error once - subsequent occurrences are ignored.
+         */
         void alert() {
             E err = error.apply(device);
             if (err == null || signaled.contains(err)) return;
 
+            // Send notification to Elastic dashboard
             Elastic.sendNotification(
                 new Elastic.Notification(
                     NotificationLevel.ERROR,
@@ -37,18 +68,37 @@ public class Alerter {
         }
     }
 
+    /** Singleton instance of the Alerter. */
     private static Alerter instance;
 
-    ArrayList<Device> devices = new ArrayList<>();
+    /** List of all monitored devices. */
+    ArrayList<Device<?, ?>> devices = new ArrayList<>();
 
+    /** Driver controller for rumble feedback. */
     CommandXboxController driverctl;
+
+    /** Operator controller for rumble feedback. */
     CommandXboxController operctl;
+
+    /** Timer for controlling rumble duration. */
     Notifier timer = new Notifier(this::still);
 
+    /**
+     * Private constructor - use getInstance() instead.
+     *
+     * Initializes the vibration timer with an appropriate name for debugging.
+     */
     private Alerter() {
         timer.setName("VibrateTimer");
     }
 
+    /**
+     * Gets the singleton instance of the Alerter.
+     *
+     * Creates the instance on first call. Thread-safe using synchronized keyword.
+     *
+     * @return The Alerter singleton instance
+     */
     public static synchronized Alerter getInstance() {
         if (instance == null) {
             instance = new Alerter();
@@ -57,6 +107,12 @@ public class Alerter {
         return instance;
     }
 
+    /**
+     * Converts a REVLibError to a human-readable error message.
+     *
+     * @param error The error code from a REV motor controller
+     * @return A descriptive error message
+     */
     private static String serialize(REVLibError error) {
         return switch (error) {
             case kOk -> "Everything is fine";
@@ -89,6 +145,15 @@ public class Alerter {
         };
     }
 
+    /**
+     * Provides the Xbox controllers to the alerter for rumble feedback.
+     *
+     * Must be called before using rumble() functionality. Asserts that controllers
+     * haven't already been provided to prevent accidental reconfiguration.
+     *
+     * @param driverctl The driver's Xbox controller
+     * @param operctl The operator's Xbox controller
+     */
     public void provideControllers(
         CommandXboxController driverctl,
         CommandXboxController operctl
@@ -100,11 +165,23 @@ public class Alerter {
         this.operctl = operctl;
     }
 
+    /**
+     * Triggers controller vibration feedback for 0.5 seconds.
+     *
+     * <p>Activates different rumble patterns on each controller:
+     * <ul>
+     *   <li>Operator: Both-sided rumble
+     *   <li>Driver: Left-side rumble
+     * </ul>
+     *
+     * <p>No rumble occurs during autonomous mode.
+     * The vibration is controlled by a timer that automatically stops after 0.5 seconds.
+     */
     public void rumble() {
         assert driverctl != null &&
         operctl != null : "Controllers not provided";
 
-        // no rumble in auto
+        // Don't rumble during autonomous
         if (DriverStation.isAutonomous()) return;
 
         this.operctl.setRumble(RumbleType.kBothRumble, 1);
@@ -114,11 +191,25 @@ public class Alerter {
         timer.startSingle(0.5);
     }
 
+    /**
+     * Stops all controller vibration.
+     *
+     * Called automatically by the timer after the rumble duration expires.
+     */
     private void still() {
         this.operctl.setRumble(RumbleType.kBothRumble, 0);
         this.driverctl.setRumble(RumbleType.kLeftRumble, 0);
     }
 
+    /**
+     * Registers a REV Spark motor controller for error monitoring.
+     *
+     * The controller will be checked periodically for errors, and any new errors
+     * will trigger a notification on the Elastic dashboard.
+     *
+     * @param name Human-readable name for the motor (e.g., "Drive Left Front")
+     * @param spark The Spark motor controller instance to monitor
+     */
     public void register(String name, SparkBase spark) {
         devices.add(
             new Device<>(
@@ -144,6 +235,12 @@ public class Alerter {
     //     );
     // }
 
+    /**
+     * Updates all device monitoring and sends alerts for any new errors.
+     *
+     * This should be called periodically (typically in robotPeriodic).
+     * Only monitors devices when running on a real robot - skips checks during replay.
+     */
     public void update() {
         if (
             AdvantageConstants.kCurrentMode !=
@@ -152,7 +249,7 @@ public class Alerter {
             return;
         }
 
-        for (Device device : devices) {
+        for (Device<?, ?> device : devices) {
             device.alert();
         }
     }

@@ -9,15 +9,40 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * Photon camera subsystem, owns cameras and handles pose estimation.
- * Does not extend SubsystemBase because this should not be used as a command requirement!
+ * Photon vision subsystem for camera-based pose estimation.
+ *
+ * <p>This class manages multiple vision cameras for detecting AprilTags and calculating
+ * robot position corrections. Unlike a typical subsystem, this does NOT extend SubsystemBase
+ * because it should not be used as a command requirement - it operates independently.
+ *
+ * <p>The subsystem:
+ * <ul>
+ *   <li>Manages one or more Photon vision cameras
+ *   <li>Updates camera measurements periodically
+ *   <li>Reports vision measurements to a listener (typically the drivetrain)
+ *   <li>Integrates with the Periodic utility for non-subsystem periodic updates
+ * </ul>
+ *
+ * <p>Vision measurements are used to correct odometry drift from encoder/gyro estimates.
  */
 public class Photon {
 
+    /** Callback function invoked when a new vision measurement is available. */
     final Consumer<VisionMeasurement> onMeasurement;
 
+    /** List of all vision cameras managed by this subsystem. */
     final List<CameraIO> cameras;
 
+    /**
+     * Constructs a Photon vision subsystem.
+     *
+     * Creates and manages the specified cameras using the provided factory function.
+     * Registers a periodic callback to update the cameras each robot tick.
+     *
+     * @param onMeasurement Callback to invoke when a measurement is ready
+     * @param cameraFactory Factory function to create camera implementations
+     * @param cameras Configurations for all cameras to be managed
+     */
     public Photon(
         Consumer<VisionMeasurement> onMeasurement,
         Function<VisionConstants.CameraConfig, CameraIO> cameraFactory,
@@ -26,21 +51,28 @@ public class Photon {
         this.onMeasurement = onMeasurement;
         this.cameras = Arrays.stream(cameras).map(cameraFactory).toList();
 
+        // Register periodic update with the command scheduler
         Periodic.schedule(this::periodic);
     }
 
+    /**
+     * Periodic update method called every robot tick.
+     *
+     * Updates all cameras and reports any new vision measurements to the listener.
+     * This allows the drivetrain to incorporate vision data into its pose estimate.
+     */
     public void periodic() {
-        // update cameras
+        // Update all camera measurements
         this.cameras.forEach(CameraIO::update);
 
-        // add to logger
-        //        Logger.processInputs("Photon/Front", front.data);
-        //        Logger.processInputs("Photon/Rear", rear.data);
-
-        // make vision odometry measurements
+        // Process vision measurements from each camera
         for (CameraIO camera : cameras) {
             VisionMeasurement measurement = camera.data.measurement;
+
+            // Only report valid measurements
             if (measurement == null) continue;
+
+            // Send measurement to listener (typically drivetrain)
             onMeasurement.accept(measurement);
         }
     }
