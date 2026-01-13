@@ -14,7 +14,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import gg.questnav.questnav.PoseFrame;
-import gg.questnav.questnav.QuestNav;
+import org.littletonrobotics.junction.Logger;
 
 public class Quest extends SubsystemBase {
 
@@ -30,37 +30,29 @@ public class Quest extends SubsystemBase {
           Centimeters.of(2).in(Meters),
           Degrees.of(0.035).in(Radians));
 
-  final QuestNav quest;
-  final TriConsumer<Pose2d, Double, Matrix<N3, N1>> addMeasurement;
+  private final QuestIO io;
+  private final QuestIOInputsAutoLogged inputs = new QuestIOInputsAutoLogged();
+  private final TriConsumer<Pose2d, Double, Matrix<N3, N1>> addMeasurement;
 
-  public Quest(TriConsumer<Pose2d, Double, Matrix<N3, N1>> addMeasurement) {
-    this.quest = new QuestNav();
+  public Quest(QuestIO io, TriConsumer<Pose2d, Double, Matrix<N3, N1>> addMeasurement) {
+    this.io = io;
     this.addMeasurement = addMeasurement;
-  }
-
-  public static Matrix<N3, N1> getStdDevs() {
-    return kQuestDevs;
-  }
-
-  public void reset(Pose2d pose) {
-    Pose3d bot = new Pose3d(pose);
-    Pose3d quest = bot.transformBy(kBotToQuest);
-    this.quest.setPose(quest);
   }
 
   @Override
   public void periodic() {
-    PoseFrame[] frames = this.quest.getAllUnreadPoseFrames();
-    if (frames.length == 0) return;
+    io.updateInputs(inputs);
+    Logger.processInputs("Quest", inputs);
 
-    for (PoseFrame frame : frames) {
+    // Process each pose frame
+    for (PoseFrame frame : inputs.readings) {
       if (!frame.isTracking()) continue;
 
       double ts = frame.dataTimestamp();
-      Pose3d quest = frame.questPose3d();
-      Pose3d bot = quest.transformBy(kBotToQuest.inverse());
+      Pose3d questPose = frame.questPose3d();
+      Pose3d botPose = questPose.transformBy(kBotToQuest.inverse());
 
-      addMeasurement.accept(bot.toPose2d(), ts, kQuestDevs);
+      addMeasurement.accept(botPose.toPose2d(), ts, kQuestDevs);
     }
   }
 }
