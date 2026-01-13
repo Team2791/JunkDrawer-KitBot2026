@@ -26,6 +26,7 @@ import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
 import frc.robot.subsystems.quest.Meta3S;
 import frc.robot.subsystems.quest.Quest;
+import frc.robot.subsystems.quest.QuestIO;
 import frc.robot.subsystems.quest.QuestReplay;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureIO;
@@ -97,7 +98,7 @@ public class RobotContainer {
         quest = new Quest(new Meta3S(), drive::addVisionMeasurement);
         break;
       default:
-        quest = new Quest(new QuestReplay(), drive::addVisionMeasurement);
+        quest = new Quest(new QuestIO() {}, drive::addVisionMeasurement);
         break;
     }
 
