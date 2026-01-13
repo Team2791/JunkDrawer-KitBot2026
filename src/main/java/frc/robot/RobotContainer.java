@@ -24,6 +24,7 @@ import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
+import frc.robot.subsystems.quest.Quest;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureIO;
 import frc.robot.subsystems.superstructure.SuperstructureIOSim;
@@ -40,6 +41,7 @@ public class RobotContainer {
   // Subsystems
   private final Drive drive;
   private final Superstructure superstructure;
+  private final Quest quest;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -86,6 +88,9 @@ public class RobotContainer {
         superstructure = new Superstructure(new SuperstructureIO() {});
         break;
     }
+
+    // Quest subsystem for vision-based localization
+    quest = new Quest((pose, timestamp, stdDevs) -> drive.addVisionMeasurement(pose, timestamp, stdDevs));
 
     // Set up auto routines
     NamedCommands.registerCommand("Launch", superstructure.launch().withTimeout(6.0));
