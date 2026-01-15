@@ -46,6 +46,7 @@ public abstract class CameraIO {
 
     /** The current vision measurement, if available. */
     public Pose2d pose = new Pose2d();
+
     public Matrix<N3, N1> stdDevs = VecBuilder.fill(-1, -1, -1);
     public double timestamp = -1;
   }
@@ -123,12 +124,12 @@ public abstract class CameraIO {
           data.pose = estimatedRobotPose.estimatedPose.toPose2d();
           data.stdDevs = stdDevs;
           data.timestamp = estimatedRobotPose.timestampSeconds;
-        }, () -> {
+        },
+        () -> {
           data.pose = new Pose2d();
           data.stdDevs = VecBuilder.fill(-1, -1, -1);
           data.timestamp = -1;
         });
-
 
     latestResult = results.isEmpty() ? null : results.get(0);
   }

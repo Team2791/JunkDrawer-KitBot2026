@@ -67,7 +67,6 @@ public class Photon {
     for (CameraIO camera : cameras) {
       Logger.processInputs(String.format("Camera/%s", camera.config.name), camera.data);
 
-
       // Only report valid measurements
       if (camera.data.timestamp == -1) continue;
 
