@@ -8,282 +8,284 @@ import java.util.function.Function;
 /**
  * A 2D vector class for representing and manipulating 2D coordinates and directions.
  *
- * This immutable class provides common vector operations including addition, subtraction,
- * scalar multiplication, dot product, and magnitude calculations. It's commonly used for
- * representing velocities, positions, and forces in 2D space.
+ * <p>This immutable class provides common vector operations including addition, subtraction, scalar
+ * multiplication, dot product, and magnitude calculations. It's commonly used for representing
+ * velocities, positions, and forces in 2D space.
  *
- * The class is immutable, meaning all operations return new Vec2 instances rather than
- * modifying the original object.
+ * <p>The class is immutable, meaning all operations return new Vec2 instances rather than modifying
+ * the original object.
  */
 public class Vec2 {
 
-    /** The X component of the vector. */
-    public final double x;
+  /** The X component of the vector. */
+  public final double x;
 
-    /** The Y component of the vector. */
-    public final double y;
+  /** The Y component of the vector. */
+  public final double y;
 
-    /** Constant for the zero vector (0, 0). */
-    public static final Vec2 ZERO = new Vec2(0, 0);
+  /** Constant for the zero vector (0, 0). */
+  public static final Vec2 ZERO = new Vec2(0, 0);
 
-    /** Constant for the unit vector (1, 1). */
-    public static final Vec2 ONE = new Vec2(1, 1);
+  /** Constant for the unit vector (1, 1). */
+  public static final Vec2 ONE = new Vec2(1, 1);
 
-    /** Constant for the unit vector along the X axis (1, 0). */
-    public static final Vec2 UNIT_X = new Vec2(1, 0);
+  /** Constant for the unit vector along the X axis (1, 0). */
+  public static final Vec2 UNIT_X = new Vec2(1, 0);
 
-    /** Constant for the unit vector along the Y axis (0, 1). */
-    public static final Vec2 UNIT_Y = new Vec2(0, 1);
+  /** Constant for the unit vector along the Y axis (0, 1). */
+  public static final Vec2 UNIT_Y = new Vec2(0, 1);
 
-    /**
-     * Constructs a new Vec2 with the given X and Y components.
-     *
-     * @param x The X component
-     * @param y The Y component
-     */
-    public Vec2(double x, double y) {
-        this.x = x;
-        this.y = y;
-    }
+  /**
+   * Constructs a new Vec2 with the given X and Y components.
+   *
+   * @param x The X component
+   * @param y The Y component
+   */
+  public Vec2(double x, double y) {
+    this.x = x;
+    this.y = y;
+  }
 
-    /**
-     * Constructs a new Vec2 with the given magnitude and angle.
-     *
-     * @param mag The magnitude for both components
-     * @param angle The angle in radians
-     */
-    public Vec2(double mag, Rotation2d angle) {
-        this.x = mag * Math.cos(angle.getRadians());
-        this.y = mag * Math.sin(angle.getRadians());
-    }
+  /**
+   * Constructs a new Vec2 with the given magnitude and angle.
+   *
+   * @param mag The magnitude for both components
+   * @param angle The angle in radians
+   */
+  public Vec2(double mag, Rotation2d angle) {
+    this.x = mag * Math.cos(angle.getRadians());
+    this.y = mag * Math.sin(angle.getRadians());
+  }
 
-    /**
-     * Creates a new Vec2 with both components set to the same value.
-     *
-     * @param value The value for both x and y components
-     * @return A new Vec2 with equal x and y components
-     */
-    public static Vec2 fill(double value) {
-        return new Vec2(value, value);
-    }
+  /**
+   * Creates a new Vec2 with both components set to the same value.
+   *
+   * @param value The value for both x and y components
+   * @return A new Vec2 with equal x and y components
+   */
+  public static Vec2 fill(double value) {
+    return new Vec2(value, value);
+  }
 
-    /**
-     * Adds another vector to this vector.
-     *
-     * @param other The vector to add
-     * @return A new Vec2 representing the sum of this and other
-     */
-    public Vec2 add(Vec2 other) {
-        return new Vec2(this.x + other.x, this.y + other.y);
-    }
+  /**
+   * Adds another vector to this vector.
+   *
+   * @param other The vector to add
+   * @return A new Vec2 representing the sum of this and other
+   */
+  public Vec2 add(Vec2 other) {
+    return new Vec2(this.x + other.x, this.y + other.y);
+  }
 
-    /**
-     * Subtracts another vector from this vector.
-     *
-     * @param other The vector to subtract
-     * @return A new Vec2 representing the difference (this - other)
-     */
-    public Vec2 sub(Vec2 other) {
-        return new Vec2(this.x - other.x, this.y - other.y);
-    }
+  /**
+   * Subtracts another vector from this vector.
+   *
+   * @param other The vector to subtract
+   * @return A new Vec2 representing the difference (this - other)
+   */
+  public Vec2 sub(Vec2 other) {
+    return new Vec2(this.x - other.x, this.y - other.y);
+  }
 
-    /**
-     * Multiplies this vector by a scalar value.
-     *
-     * @param scalar The scalar multiplier
-     * @return A new Vec2 with both components multiplied by the scalar
-     */
-    public Vec2 mul(double scalar) {
-        return new Vec2(this.x * scalar, this.y * scalar);
-    }
+  /**
+   * Multiplies this vector by a scalar value.
+   *
+   * @param scalar The scalar multiplier
+   * @return A new Vec2 with both components multiplied by the scalar
+   */
+  public Vec2 mul(double scalar) {
+    return new Vec2(this.x * scalar, this.y * scalar);
+  }
 
-    /**
-     * Performs element-wise multiplication with another vector.
-     *
-     * @param elementwise The vector to multiply element-wise
-     * @return A new Vec2 with each component multiplied (x*x, y*y)
-     */
-    public Vec2 mul(Vec2 elementwise) {
-        return new Vec2(this.x * elementwise.x, this.y * elementwise.y);
-    }
+  /**
+   * Performs element-wise multiplication with another vector.
+   *
+   * @param elementwise The vector to multiply element-wise
+   * @return A new Vec2 with each component multiplied (x*x, y*y)
+   */
+  public Vec2 mul(Vec2 elementwise) {
+    return new Vec2(this.x * elementwise.x, this.y * elementwise.y);
+  }
 
-    /**
-     * Raises each component to a given power.
-     *
-     * @param exp The exponent
-     * @return A new Vec2 with each component raised to the power
-     */
-    public Vec2 powi(int exp) {
-        return new Vec2(Math.pow(this.x, exp), Math.pow(this.y, exp));
-    }
+  /**
+   * Raises each component to a given power.
+   *
+   * @param exp The exponent
+   * @return A new Vec2 with each component raised to the power
+   */
+  public Vec2 powi(int exp) {
+    return new Vec2(Math.pow(this.x, exp), Math.pow(this.y, exp));
+  }
 
-    /**
-     * Divides this vector by a scalar value.
-     *
-     * @param scalar The scalar divisor
-     * @return A new Vec2 with both components divided by the scalar
-     */
-    public Vec2 div(double scalar) {
-        return new Vec2(this.x / scalar, this.y / scalar);
-    }
+  /**
+   * Divides this vector by a scalar value.
+   *
+   * @param scalar The scalar divisor
+   * @return A new Vec2 with both components divided by the scalar
+   */
+  public Vec2 div(double scalar) {
+    return new Vec2(this.x / scalar, this.y / scalar);
+  }
 
-    /**
-     * Performs element-wise division with another vector.
-     *
-     * @param elementwise The vector to divide element-wise
-     * @return A new Vec2 with each component divided (x/x, y/y)
-     */
-    public Vec2 div(Vec2 elementwise) {
-        return new Vec2(this.x / elementwise.x, this.y / elementwise.y);
-    }
+  /**
+   * Performs element-wise division with another vector.
+   *
+   * @param elementwise The vector to divide element-wise
+   * @return A new Vec2 with each component divided (x/x, y/y)
+   */
+  public Vec2 div(Vec2 elementwise) {
+    return new Vec2(this.x / elementwise.x, this.y / elementwise.y);
+  }
 
-    /**
-     * Computes the dot product with another vector.
-     *
-     * The dot product represents the projection of one vector onto another.
-     * For perpendicular vectors, the dot product is zero.
-     *
-     * @param other The other vector
-     * @return The dot product as a scalar (this · other)
-     */
-    public double dot(Vec2 other) {
-        return this.x * other.x + this.y * other.y;
-    }
+  /**
+   * Computes the dot product with another vector.
+   *
+   * <p>The dot product represents the projection of one vector onto another. For perpendicular
+   * vectors, the dot product is zero.
+   *
+   * @param other The other vector
+   * @return The dot product as a scalar (this · other)
+   */
+  public double dot(Vec2 other) {
+    return this.x * other.x + this.y * other.y;
+  }
 
-    /**
-     * Returns the normalized (unit) version of this vector.
-     *
-     * The normalized vector has a magnitude of 1 but points in the same direction.
-     * For zero vectors, returns a zero vector to avoid division by zero.
-     *
-     * @return A new Vec2 with the same direction but magnitude of 1
-     */
-    public Vec2 norm() {
-        double len = mag();
-        if (len == 0) return new Vec2(0, 0);
-        return new Vec2(this.x / len, this.y / len);
-    }
+  /**
+   * Returns the normalized (unit) version of this vector.
+   *
+   * <p>The normalized vector has a magnitude of 1 but points in the same direction. For zero
+   * vectors, returns a zero vector to avoid division by zero.
+   *
+   * @return A new Vec2 with the same direction but magnitude of 1
+   */
+  public Vec2 norm() {
+    double len = mag();
+    if (len == 0) return new Vec2(0, 0);
+    return new Vec2(this.x / len, this.y / len);
+  }
 
-    /**
-     * Gets the angle of this vector from the positive X-axis.
-     *
-     * @return A Rotation2d representing the angle of this vector
-     */
-    public Rotation2d theta() {
-        return new Rotation2d(Math.atan2(this.y, this.x));
-    }
+  /**
+   * Gets the angle of this vector from the positive X-axis.
+   *
+   * @return A Rotation2d representing the angle of this vector
+   */
+  public Rotation2d theta() {
+    return new Rotation2d(Math.atan2(this.y, this.x));
+  }
 
-    /**
-     * Rotates this vector by a given angle, counterclockwise.
-     *
-     * <p>This multiplies the translation vector by a counterclockwise rotation matrix of the given
-     * angle.
-     *
-     * <pre>
-     * [x_new] = [other.cos, -other.sin][x]
-     * [y_new] = [other.sin,  other.cos][y]
-     * </pre>
-     *
-     * @param angle The angle to rotate by
-     * @return A new Vec2 representing the rotated vector
-     */
-    public Vec2 rotate(Rotation2d angle) {
-        double cosA = angle.getCos();
-        double sinA = angle.getSin();
-        double newX = cosA * this.x - sinA * this.y;
-        double newY = sinA * this.x + cosA * this.y;
-        return new Vec2(newX, newY);
-    }
+  /**
+   * Rotates this vector by a given angle, counterclockwise.
+   *
+   * <p>This multiplies the translation vector by a counterclockwise rotation matrix of the given
+   * angle.
+   *
+   * <pre>
+   * [x_new] = [other.cos, -other.sin][x]
+   * [y_new] = [other.sin,  other.cos][y]
+   * </pre>
+   *
+   * @param angle The angle to rotate by
+   * @return A new Vec2 representing the rotated vector
+   */
+  public Vec2 rotate(Rotation2d angle) {
+    double cosA = angle.getCos();
+    double sinA = angle.getSin();
+    double newX = cosA * this.x - sinA * this.y;
+    double newY = sinA * this.x + cosA * this.y;
+    return new Vec2(newX, newY);
+  }
 
-    /**
-     * Calculates the magnitude (length) of this vector.
-     *
-     * Computed as sqrt(x² + y²).
-     *
-     * @return The magnitude of this vector
-     */
-    public double mag() {
-        return Math.hypot(this.x, this.y);
-    }
+  /**
+   * Calculates the magnitude (length) of this vector.
+   *
+   * <p>Computed as sqrt(x² + y²).
+   *
+   * @return The magnitude of this vector
+   */
+  public double mag() {
+    return Math.hypot(this.x, this.y);
+  }
 
-    /**
-     * Calculates the squared magnitude of this vector.
-     *
-     * Computed as x² + y². This is more efficient than mag() when you only
-     * need to compare magnitudes, since comparing squares preserves the order.
-     *
-     * @return The squared magnitude of this vector
-     */
-    public double mag2() {
-        return this.dot(this);
-    }
+  /**
+   * Calculates the squared magnitude of this vector.
+   *
+   * <p>Computed as x² + y². This is more efficient than mag() when you only need to compare
+   * magnitudes, since comparing squares preserves the order.
+   *
+   * @return The squared magnitude of this vector
+   */
+  public double mag2() {
+    return this.dot(this);
+  }
 
-    /**
-     * Returns the component-wise absolute value of this vector.
-     *
-     * @return A new Vec2 with each component set to its absolute value
-     */
-    public Vec2 abs() {
-        return new Vec2(Math.abs(this.x), Math.abs(this.y));
-    }
+  /**
+   * Returns the component-wise absolute value of this vector.
+   *
+   * @return A new Vec2 with each component set to its absolute value
+   */
+  public Vec2 abs() {
+    return new Vec2(Math.abs(this.x), Math.abs(this.y));
+  }
 
-    /**
-     * Applies a function to both components of this vector.
-     *
-     * @param f The function to apply to each component
-     * @return A new Vec2 with f applied to both x and y
-     */
-    public Vec2 apply(Function<Double, Double> f) {
-        return new Vec2(f.apply(this.x), f.apply(this.y));
-    }
+  /**
+   * Applies a function to both components of this vector.
+   *
+   * @param f The function to apply to each component
+   * @return A new Vec2 with f applied to both x and y
+   */
+  public Vec2 apply(Function<Double, Double> f) {
+    return new Vec2(f.apply(this.x), f.apply(this.y));
+  }
 
-    /**
-     * Applies separate functions to each component of this vector.
-     *
-     * @param x The function to apply to the x component
-     * @param y The function to apply to the y component
-     * @return A new Vec2 with the functions applied to each component
-     */
-    public Vec2 apply(Function<Double, Double> x, Function<Double, Double> y) {
-        return new Vec2(x.apply(this.x), y.apply(this.y));
-    }
+  /**
+   * Applies separate functions to each component of this vector.
+   *
+   * @param x The function to apply to the x component
+   * @param y The function to apply to the y component
+   * @return A new Vec2 with the functions applied to each component
+   */
+  public Vec2 apply(Function<Double, Double> x, Function<Double, Double> y) {
+    return new Vec2(x.apply(this.x), y.apply(this.y));
+  }
 
-    /**
-     * Returns the sign of each component.
-     *
-     * Each component becomes -1 (negative), 0 (zero), or 1 (positive).
-     *
-     * @return A new Vec2 with the sign of each component
-     */
-    public Vec2 sign() {
-        return new Vec2(Math.signum(this.x), Math.signum(this.y));
-    }
+  /**
+   * Returns the sign of each component.
+   *
+   * <p>Each component becomes -1 (negative), 0 (zero), or 1 (positive).
+   *
+   * @return A new Vec2 with the sign of each component
+   */
+  public Vec2 sign() {
+    return new Vec2(Math.signum(this.x), Math.signum(this.y));
+  }
 
-    /**
-     * Turns a {@link Translation2d} into a Vec2
-     * @param translation the translation
-     */
-    public Vec2(Translation2d translation) {
-        this.x = translation.getX();
-        this.y = translation.getY();
-    }
+  /**
+   * Turns a {@link Translation2d} into a Vec2
+   *
+   * @param translation the translation
+   */
+  public Vec2(Translation2d translation) {
+    this.x = translation.getX();
+    this.y = translation.getY();
+  }
 
-    /**
-     * Turns a {@link Pose2d} into a Vec2 using it's Translation
-     * @param pose the pose
-     */
-    public Vec2(Pose2d pose) {
-        this(pose.getTranslation());
-    }
+  /**
+   * Turns a {@link Pose2d} into a Vec2 using it's Translation
+   *
+   * @param pose the pose
+   */
+  public Vec2(Pose2d pose) {
+    this(pose.getTranslation());
+  }
 
-    /**
-     * Creates a copy of this vector.
-     *
-     * <p>This is almost always not needed since the class is immutable.
-     *
-     * @return A new Vec2 with the same components as this vector
-     */
-    public Vec2 copy() {
-        return new Vec2(this.x, this.y);
-    }
+  /**
+   * Creates a copy of this vector.
+   *
+   * <p>This is almost always not needed since the class is immutable.
+   *
+   * @return A new Vec2 with the same components as this vector
+   */
+  public Vec2 copy() {
+    return new Vec2(this.x, this.y);
+  }
 }

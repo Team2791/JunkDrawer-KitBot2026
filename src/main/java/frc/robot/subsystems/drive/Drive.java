@@ -38,6 +38,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
+import frc.robot.subsystems.photon.CameraPhoton;
+import frc.robot.subsystems.photon.CameraReplay;
+import frc.robot.subsystems.photon.Photon;
 import frc.robot.util.LocalADStarAK;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -64,6 +67,15 @@ public class Drive extends SubsystemBase {
       };
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
+
+  private final Photon photon = new Photon(this::addVisionMeasurement, (data) -> {
+    switch (Constants.currentMode) {
+      case REAL:
+        return new CameraPhoton(data);
+      default:
+        return new CameraReplay(data);
+    } 
+  });
 
   public Drive(
       GyroIO gyroIO,
@@ -118,6 +130,8 @@ public class Drive extends SubsystemBase {
 
   @Override
   public void periodic() {
+    photon.update();
+
     odometryLock.lock(); // Prevents odometry updates while reading data
     gyroIO.updateInputs(gyroInputs);
     Logger.processInputs("Drive/Gyro", gyroInputs);
