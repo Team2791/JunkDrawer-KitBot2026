@@ -29,123 +29,136 @@ import org.littletonrobotics.junction.Logger;
  */
 class Repulse extends Command {
 
-  /** Supplier for the target pose. */
-  final Supplier<Pose2d> target;
+    /** Supplier for the target pose. */
+    final Supplier<Pose2d> target;
 
-  /** Repulsor instance for pathfinding calculations. */
-  final Repulsor repulsor = new Repulsor();
+    /** Repulsor instance for pathfinding calculations. */
+    final Repulsor repulsor = new Repulsor();
 
-  final Drive drivetrain;
+    final Drive drivetrain;
 
-  /** PID controller for orthogonal movement correction. */
-  final PIDController orthoController =
-      new PIDController(
-          ControlConstants.Auto.kOrthoP,
-          ControlConstants.Auto.kOrthoI,
-          ControlConstants.Auto.kOrthoD);
+    /** PID controller for orthogonal movement correction. */
+    final PIDController orthoController = new PIDController(
+        ControlConstants.Auto.kOrthoP,
+        ControlConstants.Auto.kOrthoI,
+        ControlConstants.Auto.kOrthoD
+    );
 
-  /** PID controller for rotational movement correction. */
-  final PIDController rotController =
-      new PIDController(
-          ControlConstants.Auto.kTurnP, ControlConstants.Auto.kTurnI, ControlConstants.Auto.kTurnD);
+    /** PID controller for rotational movement correction. */
+    final PIDController rotController = new PIDController(
+        ControlConstants.Auto.kTurnP,
+        ControlConstants.Auto.kTurnI,
+        ControlConstants.Auto.kTurnD
+    );
 
-  /** Currently targeted pose, reset every {@link #initialize()} */
-  Pose2d currentTarget;
+    /** Currently targeted pose, reset every {@link #initialize()} */
+    Pose2d currentTarget;
 
-  /**
-   * Constructor for Repulse command.
-   *
-   * @param drivetrain Drivetrain subsystem for motion control
-   * @param target Supplier providing the target pose
-   */
-  Repulse(Drive drivetrain, Supplier<Pose2d> target) {
-    this.target = target;
-    this.drivetrain = drivetrain;
+    /**
+     * Constructor for Repulse command.
+     *
+     * @param drivetrain Drivetrain subsystem for motion control
+     * @param target Supplier providing the target pose
+     */
+    Repulse(Drive drivetrain, Supplier<Pose2d> target) {
+        this.target = target;
+        this.drivetrain = drivetrain;
 
-    addRequirements(drivetrain);
-  }
+        addRequirements(drivetrain);
+    }
 
-  /**
-   * Initializes the Repulse command.
-   *
-   * <ol>
-   *   <li>Gets the current target pose from the supplier.
-   *   <li>Sets the Repulsor goal to the target translation.
-   *   <li>Logs the planned trajectory for visualization.
-   * </ol>
-   */
-  @Override
-  public void initialize() {
-    currentTarget = target.get();
-    repulsor.setGoal(currentTarget.getTranslation());
+    /**
+     * Initializes the Repulse command.
+     *
+     * <ol>
+     *   <li>Gets the current target pose from the supplier.
+     *   <li>Sets the Repulsor goal to the target translation.
+     *   <li>Logs the planned trajectory for visualization.
+     * </ol>
+     */
+    @Override
+    public void initialize() {
+        currentTarget = target.get();
+        repulsor.setGoal(currentTarget.getTranslation());
 
-    List<Translation2d> traj =
-        repulsor.getTrajectory(
-            drivetrain.getPose().getTranslation(), currentTarget.getTranslation(), 20);
-    Logger.recordOutput("Pathfind/RepulseTrajectory", traj.stream().toArray(Translation2d[]::new));
-  }
+        List<Translation2d> traj = repulsor.getTrajectory(
+            drivetrain.getPose().getTranslation(),
+            currentTarget.getTranslation(),
+            20
+        );
+        Logger.recordOutput(
+            "Pathfind/RepulseTrajectory",
+            traj.stream().toArray(Translation2d[]::new)
+        );
+    }
 
-  /**
-   * Runs the Repulse pathfinding logic each cycle.
-   *
-   * <ol>
-   *   <li>Gets the next SwerveSample from Repulsor based on current pose and velocity.
-   *   <li>Calculates the distance vector to the target.
-   *   <li>Computes PID correction power based on distance.
-   *   <li>Adds PID correction to Repulsor's suggested velocities.
-   *   <li>Drives the drivetrain with the combined velocities and rotational PID output.
-   * </ol>
-   */
-  @Override
-  public void execute() {
-    SwerveSample sample =
-        repulsor.getCmd(
+    /**
+     * Runs the Repulse pathfinding logic each cycle.
+     *
+     * <ol>
+     *   <li>Gets the next SwerveSample from Repulsor based on current pose and velocity.
+     *   <li>Calculates the distance vector to the target.
+     *   <li>Computes PID correction power based on distance.
+     *   <li>Adds PID correction to Repulsor's suggested velocities.
+     *   <li>Drives the drivetrain with the combined velocities and rotational PID output.
+     * </ol>
+     */
+    @Override
+    public void execute() {
+        SwerveSample sample = repulsor.getCmd(
             drivetrain.getPose(),
             drivetrain.getChassisSpeeds(),
             DriveConstants.maxSpeedMetersPerSec,
-            true);
+            true
+        );
 
-    Logger.recordOutput("Pathfind/RepulseTarget", sample.getPose());
+        Logger.recordOutput("Pathfind/RepulseTarget", sample.getPose());
 
-    Vec2 pose = new Vec2(drivetrain.getPose());
-    Vec2 target = new Vec2(sample.getPose());
-    Vec2 dist = target.sub(pose);
-    Vec2 pidpower = dist.norm().mul(orthoController.calculate(dist.mag()));
-    Vec2 result = new Vec2(sample.vx, sample.vy).add(pidpower);
+        Vec2 pose = new Vec2(drivetrain.getPose());
+        Vec2 target = new Vec2(sample.getPose());
+        Vec2 dist = target.sub(pose);
+        Vec2 pidpower = dist.norm().mul(orthoController.calculate(dist.mag()));
+        Vec2 result = new Vec2(sample.vx, sample.vy).add(pidpower);
 
-    drivetrain.runVelocity(
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            result.x,
-            result.y,
-            rotController.calculate(
-                drivetrain.getPose().getRotation().getRadians(),
-                currentTarget.getRotation().getRadians()),
-            drivetrain.getPose().getRotation()));
-  }
+        drivetrain.runVelocity(
+            ChassisSpeeds.fromFieldRelativeSpeeds(
+                result.x,
+                result.y,
+                rotController.calculate(
+                    drivetrain.getPose().getRotation().getRadians(),
+                    currentTarget.getRotation().getRadians()
+                ),
+                drivetrain.getPose().getRotation()
+            )
+        );
+    }
 
-  /**
-   * Cleans up after the Repulse command ends.
-   *
-   * <p>Clears the target and trajectory logs from the field visualization.
-   */
-  @Override
-  public void end(boolean interrupted) {
-    Logger.recordOutput("Pathfind/RepulseTarget", new Pose2d(-1, -1, new Rotation2d()));
-    Logger.recordOutput("Pathfind/RepulseTrajectory", new Translation2d[0]);
-  }
+    /**
+     * Cleans up after the Repulse command ends.
+     *
+     * <p>Clears the target and trajectory logs from the field visualization.
+     */
+    @Override
+    public void end(boolean interrupted) {
+        Logger.recordOutput(
+            "Pathfind/RepulseTarget",
+            new Pose2d(-1, -1, new Rotation2d())
+        );
+        Logger.recordOutput("Pathfind/RepulseTrajectory", new Translation2d[0]);
+    }
 
-  /**
-   * Determines if the Repulse command is finished.
-   *
-   * <p>Finishes when the robot is within the nearby threshold distance of the target. See {@link
-   * ControlConstants.Auto#kNearbyThreshold}.
-   */
-  @Override
-  public boolean isFinished() {
-    Vec2 pose = new Vec2(drivetrain.getPose());
-    Vec2 target = new Vec2(currentTarget);
-    Vec2 dist = target.sub(pose);
+    /**
+     * Determines if the Repulse command is finished.
+     *
+     * <p>Finishes when the robot is within the nearby threshold distance of the target. See {@link
+     * ControlConstants.Auto#kNearbyThreshold}.
+     */
+    @Override
+    public boolean isFinished() {
+        Vec2 pose = new Vec2(drivetrain.getPose());
+        Vec2 target = new Vec2(currentTarget);
+        Vec2 dist = target.sub(pose);
 
-    return dist.mag() < ControlConstants.Auto.kNearbyThreshold;
-  }
+        return dist.mag() < ControlConstants.Auto.kNearbyThreshold;
+    }
 }

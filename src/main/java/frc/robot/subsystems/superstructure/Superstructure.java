@@ -18,62 +18,65 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.littletonrobotics.junction.Logger;
 
 public class Superstructure extends SubsystemBase {
-  private final SuperstructureIO io;
-  private final SuperstructureIOInputsAutoLogged inputs = new SuperstructureIOInputsAutoLogged();
 
-  public Superstructure(SuperstructureIO io) {
-    this.io = io;
-  }
+    private final SuperstructureIO io;
+    private final SuperstructureIOInputsAutoLogged inputs =
+        new SuperstructureIOInputsAutoLogged();
 
-  @Override
-  public void periodic() {
-    io.updateInputs(inputs);
-    Logger.processInputs("Superstructure", inputs);
-  }
+    public Superstructure(SuperstructureIO io) {
+        this.io = io;
+    }
 
-  /** Set the rollers to the values for intaking. */
-  public Command intake() {
-    return runEnd(
-        () -> {
-          io.setFeederVoltage(intakingFeederVoltage);
-          io.setIntakeLauncherVoltage(intakingFeederVoltage);
-        },
-        () -> {
-          io.setFeederVoltage(0.0);
-          io.setIntakeLauncherVoltage(0.0);
-        });
-  }
+    @Override
+    public void periodic() {
+        io.updateInputs(inputs);
+        Logger.processInputs("Superstructure", inputs);
+    }
 
-  /** Set the rollers to the values for ejecting fuel out the intake. */
-  public Command eject() {
-    return runEnd(
-        () -> {
-          io.setFeederVoltage(-intakingFeederVoltage);
-          io.setIntakeLauncherVoltage(-intakingFeederVoltage);
-        },
-        () -> {
-          io.setFeederVoltage(0.0);
-          io.setIntakeLauncherVoltage(0.0);
-        });
-  }
-
-  /** Set the rollers to the values for launching. Spins up before feeding fuel. */
-  public Command launch() {
-    return run(() -> {
-          io.setFeederVoltage(spinUpFeederVoltage);
-          io.setIntakeLauncherVoltage(launchingLauncherVoltage);
-        })
-        .withTimeout(spinUpSeconds)
-        .andThen(
-            run(
-                () -> {
-                  io.setFeederVoltage(launchingFeederVoltage);
-                  io.setIntakeLauncherVoltage(launchingLauncherVoltage);
-                }))
-        .finallyDo(
+    /** Set the rollers to the values for intaking. */
+    public Command intake() {
+        return runEnd(
             () -> {
-              io.setFeederVoltage(0.0);
-              io.setIntakeLauncherVoltage(0.0);
+                io.setFeederVoltage(intakingFeederVoltage);
+                io.setIntakeLauncherVoltage(intakingFeederVoltage);
+            },
+            () -> {
+                io.setFeederVoltage(0.0);
+                io.setIntakeLauncherVoltage(0.0);
+            }
+        );
+    }
+
+    /** Set the rollers to the values for ejecting fuel out the intake. */
+    public Command eject() {
+        return runEnd(
+            () -> {
+                io.setFeederVoltage(-intakingFeederVoltage);
+                io.setIntakeLauncherVoltage(-intakingFeederVoltage);
+            },
+            () -> {
+                io.setFeederVoltage(0.0);
+                io.setIntakeLauncherVoltage(0.0);
+            }
+        );
+    }
+
+    /** Set the rollers to the values for launching. Spins up before feeding fuel. */
+    public Command launch() {
+        return run(() -> {
+            io.setFeederVoltage(spinUpFeederVoltage);
+            io.setIntakeLauncherVoltage(launchingLauncherVoltage);
+        })
+            .withTimeout(spinUpSeconds)
+            .andThen(
+                run(() -> {
+                    io.setFeederVoltage(launchingFeederVoltage);
+                    io.setIntakeLauncherVoltage(launchingLauncherVoltage);
+                })
+            )
+            .finallyDo(() -> {
+                io.setFeederVoltage(0.0);
+                io.setIntakeLauncherVoltage(0.0);
             });
-  }
+    }
 }
