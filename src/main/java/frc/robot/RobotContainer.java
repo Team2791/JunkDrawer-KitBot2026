@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
-import frc.robot.subsystems.LEDs;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
@@ -42,7 +41,6 @@ public class RobotContainer {
     // Subsystems
     private final Drive drive;
     private final Superstructure superstructure;
-    final LEDs leds = new LEDs();
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(
@@ -51,8 +49,6 @@ public class RobotContainer {
 
     // Dashboard inputs
     private final LoggedDashboardChooser<Command> autoChooser;
-
-    
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
