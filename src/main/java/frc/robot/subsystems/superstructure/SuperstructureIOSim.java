@@ -15,57 +15,45 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 public class SuperstructureIOSim implements SuperstructureIO {
+  private DCMotorSim feederSim =
+      new DCMotorSim(
+          LinearSystemId.createDCMotorSystem(DCMotor.getCIM(1), 0.004, feederMotorReduction),
+          DCMotor.getCIM(1));
+  private DCMotorSim intakeLauncherSim =
+      new DCMotorSim(
+          LinearSystemId.createDCMotorSystem(
+              DCMotor.getCIM(1), 0.004, intakeLauncherMotorReduction),
+          DCMotor.getCIM(1));
 
-    private DCMotorSim feederSim = new DCMotorSim(
-        LinearSystemId.createDCMotorSystem(
-            DCMotor.getCIM(1),
-            0.004,
-            feederMotorReduction
-        ),
-        DCMotor.getCIM(1)
-    );
-    private DCMotorSim intakeLauncherSim = new DCMotorSim(
-        LinearSystemId.createDCMotorSystem(
-            DCMotor.getCIM(1),
-            0.004,
-            intakeLauncherMotorReduction
-        ),
-        DCMotor.getCIM(1)
-    );
+  private double feederAppliedVolts = 0.0;
+  private double intakeLauncherAppliedVolts = 0.0;
 
-    private double feederAppliedVolts = 0.0;
-    private double intakeLauncherAppliedVolts = 0.0;
+  @Override
+  public void updateInputs(SuperstructureIOInputs inputs) {
+    feederSim.setInputVoltage(feederAppliedVolts);
+    feederSim.update(0.02);
 
-    @Override
-    public void updateInputs(SuperstructureIOInputs inputs) {
-        feederSim.setInputVoltage(feederAppliedVolts);
-        feederSim.update(0.02);
+    intakeLauncherSim.setInputVoltage(intakeLauncherAppliedVolts);
+    intakeLauncherSim.update(0.02);
 
-        intakeLauncherSim.setInputVoltage(intakeLauncherAppliedVolts);
-        intakeLauncherSim.update(0.02);
+    inputs.feederPositionRad = feederSim.getAngularPositionRad();
+    inputs.feederVelocityRadPerSec = feederSim.getAngularVelocityRadPerSec();
+    inputs.feederAppliedVolts = feederAppliedVolts;
+    inputs.feederCurrentAmps = feederSim.getCurrentDrawAmps();
 
-        inputs.feederPositionRad = feederSim.getAngularPositionRad();
-        inputs.feederVelocityRadPerSec =
-            feederSim.getAngularVelocityRadPerSec();
-        inputs.feederAppliedVolts = feederAppliedVolts;
-        inputs.feederCurrentAmps = feederSim.getCurrentDrawAmps();
+    inputs.intakeLauncherPositionRad = intakeLauncherSim.getAngularPositionRad();
+    inputs.intakeLauncherVelocityRadPerSec = intakeLauncherSim.getAngularVelocityRadPerSec();
+    inputs.intakeLauncherAppliedVolts = intakeLauncherAppliedVolts;
+    inputs.intakeLauncherCurrentAmps = intakeLauncherSim.getCurrentDrawAmps();
+  }
 
-        inputs.intakeLauncherPositionRad =
-            intakeLauncherSim.getAngularPositionRad();
-        inputs.intakeLauncherVelocityRadPerSec =
-            intakeLauncherSim.getAngularVelocityRadPerSec();
-        inputs.intakeLauncherAppliedVolts = intakeLauncherAppliedVolts;
-        inputs.intakeLauncherCurrentAmps =
-            intakeLauncherSim.getCurrentDrawAmps();
-    }
+  @Override
+  public void setFeederVoltage(double volts) {
+    feederAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
+  }
 
-    @Override
-    public void setFeederVoltage(double volts) {
-        feederAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
-    }
-
-    @Override
-    public void setIntakeLauncherVoltage(double volts) {
-        intakeLauncherAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
-    }
+  @Override
+  public void setIntakeLauncherVoltage(double volts) {
+    intakeLauncherAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
+  }
 }
