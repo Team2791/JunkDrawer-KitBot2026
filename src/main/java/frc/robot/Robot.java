@@ -8,8 +8,13 @@
 package frc.robot;
 
 import com.revrobotics.util.StatusLogger;
+<<<<<<< Updated upstream
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.alerter.Led;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -72,10 +77,34 @@ public class Robot extends LoggedRobot {
     // Start AdvantageKit logger
     Logger.start();
 
-    // Instantiate our RobotContainer. This will perform all our button bindings,
-    // and put our autonomous chooser on the dashboard.
-    robotContainer = new RobotContainer();
-  }
+        // Instantiate our RobotContainer. This will perform all our button bindings,
+        // and put our autonomous chooser on the dashboard.
+        robotContainer = new RobotContainer();
+
+        // Register base states for LEDs
+        Led led = Led.getInstance();
+
+        led.register(
+            DriverStation::isDisabled,
+            Led.Mode.solid(255, 0, 0),
+            Led.Priority.IDLE
+        );
+        led.register(
+            DriverStation::isAutonomous,
+            Led.Mode.solid(0, 0, 255),
+            Led.Priority.IDLE
+        );
+        led.register(
+            DriverStation::isTeleop,
+            Led.Mode.solid(0, 255, 0),
+            Led.Priority.IDLE
+        );
+        led.register(
+            () -> !DriverStation.isDSAttached(),
+            Led.Mode.rainbow(),
+            Led.Priority.CONTEXT
+        );
+    }
 
   /** This function is called periodically during all modes. */
   @Override
@@ -95,10 +124,6 @@ public class Robot extends LoggedRobot {
     // Threads.setCurrentThreadPriority(false, 10);
   }
 
-  /** This function is called once when the robot is disabled. */
-  @Override
-  public void disabledInit() {}
-
   /** This function is called periodically when disabled. */
   @Override
   public void disabledPeriodic() {}
@@ -108,7 +133,9 @@ public class Robot extends LoggedRobot {
   public void autonomousInit() {
     autonomousCommand = robotContainer.getAutonomousCommand();
 
-    // schedule the autonomous command (example)
+        if (robotContainer != null) {
+            robotContainer.leds.setMode(LEDs.Mode.AUTONOMOUS);
+        }
     if (autonomousCommand != null) {
       CommandScheduler.getInstance().schedule(autonomousCommand);
     }
@@ -121,6 +148,10 @@ public class Robot extends LoggedRobot {
   /** This function is called once when teleop is enabled. */
   @Override
   public void teleopInit() {
+  
+    if (robotContainer != null) {
+            robotContainer.leds.setMode(LEDs.Mode.TELEOP);
+    }
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -152,4 +183,8 @@ public class Robot extends LoggedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {}
+   @Override
+    public void disabledInit() {
+        robotContainer.leds.setMode(LEDs.Mode.DISABLED);
+    }
 }

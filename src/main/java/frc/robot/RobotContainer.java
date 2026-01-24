@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
+import frc.robot.subsystems.LEDs;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
@@ -31,6 +32,7 @@ import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureIO;
 import frc.robot.subsystems.superstructure.SuperstructureIOSim;
 import frc.robot.subsystems.superstructure.SuperstructureIOSpark;
+import frc.robot.util.Alerter;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -40,22 +42,19 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  * subsystems, commands, and button mappings) should be declared here.
  */
 public class RobotContainer {
-  // Subsystems
   private final Drive drive;
   private final Superstructure superstructure;
   private final Quest quest;
+  public final LEDs leds;
 
-  // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
 
-  // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     switch (Constants.currentMode) {
       case REAL:
-        // Real robot, instantiate hardware IO implementations
         drive =
             new Drive(
                 new GyroIONavX(),
@@ -65,9 +64,7 @@ public class RobotContainer {
                 new ModuleIOSpark(3));
         superstructure = new Superstructure(new SuperstructureIOSpark());
         break;
-
       case SIM:
-        // Sim robot, instantiate physics sim IO implementations
         drive =
             new Drive(
                 new GyroIO() {},
@@ -77,9 +74,7 @@ public class RobotContainer {
                 new ModuleIOSim());
         superstructure = new Superstructure(new SuperstructureIOSim());
         break;
-
       default:
-        // Replayed robot, disable IO implementations
         drive =
             new Drive(
                 new GyroIO() {},
@@ -91,7 +86,8 @@ public class RobotContainer {
         break;
     }
 
-    // Quest subsystem for vision-based localization
+    leds = new LEDs();
+
     switch (Constants.currentMode) {
       case REAL:
         quest = new Quest(new Meta3S(), drive::addVisionMeasurement);
@@ -101,11 +97,9 @@ public class RobotContainer {
         break;
     }
 
-    // Set up auto routines
     NamedCommands.registerCommand("Launch", superstructure.launch().withTimeout(6.0));
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
-    // Set up SysId routines
     autoChooser.addOption(
         "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
     autoChooser.addOption(
@@ -121,8 +115,9 @@ public class RobotContainer {
     autoChooser.addOption(
         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-    // Configure the button bindings
     configureButtonBindings();
+    
+    Alerter.getInstance().provideControllers(controller);
   }
 
   /**
@@ -132,20 +127,15 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-    // Default command, normal field-relative drive
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
-
-    // Control bindings for superstructure
     controller.leftBumper().whileTrue(superstructure.intake());
     controller.rightBumper().whileTrue(superstructure.launch());
     controller.a().whileTrue(superstructure.eject());
-
-    // Lock to 0° when A button is held
     controller
         .a()
         .whileTrue(
@@ -154,11 +144,7 @@ public class RobotContainer {
                 () -> -controller.getLeftY(),
                 () -> -controller.getLeftX(),
                 () -> Rotation2d.kZero));
-
-    // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
-
-    // Reset gyro to 0° when B button is pressed
     controller
         .b()
         .onTrue(
