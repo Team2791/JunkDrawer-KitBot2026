@@ -3,8 +3,9 @@ package frc.robot.alerter;
 import com.revrobotics.REVLibError;
 import com.revrobotics.spark.SparkBase;
 import com.studica.frc.AHRS;
+import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.TimedRobot;
 import frc.robot.Constants;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -27,13 +28,17 @@ public class Alerter {
     /** Singleton instance of the Alerter. */
     private static Alerter instance;
 
+    private Notifier periodic = new Notifier(this::update);
+
     /** List of all monitored devices. */
     ArrayList<Device<?, ?>> devices = new ArrayList<>();
 
     /**
      * Private constructor, see {@link #getInstance()}.
      */
-    private Alerter() {}
+    private Alerter() {
+        periodic.startPeriodic(TimedRobot.kDefaultPeriod);
+    }
 
     /**
      * Gets the singleton instance of the Alerter.
@@ -152,7 +157,7 @@ public class Alerter {
      * This should be called periodically.
      * Only monitors devices when running on a real robot - skips checks during replay.
      */
-    public void update() {
+    private void update() {
         if (Constants.currentMode != Constants.Mode.REAL) {
             return;
         }

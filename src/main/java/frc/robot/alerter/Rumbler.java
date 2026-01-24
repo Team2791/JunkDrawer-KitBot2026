@@ -1,7 +1,7 @@
 package frc.robot.alerter;
 
-import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 /**
@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
  * The rumble lasts for a fixed duration controlled by a timer.
  */
 public class Rumbler {
+
     /** Driver controller for rumble feedback. */
     CommandXboxController driverctl;
 

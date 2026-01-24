@@ -1,10 +1,9 @@
 package frc.robot.alerter;
 
-import java.util.ArrayList;
-import java.util.function.Function;
-
 import frc.robot.util.Elastic;
 import frc.robot.util.Elastic.Notification.NotificationLevel;
+import java.util.ArrayList;
+import java.util.function.Function;
 
 /**
  * Internal record representing a monitored device and its error state.
