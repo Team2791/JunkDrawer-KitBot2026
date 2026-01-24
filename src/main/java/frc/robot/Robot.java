@@ -8,8 +8,15 @@
 package frc.robot;
 
 import com.revrobotics.util.StatusLogger;
+<<<<<<< Updated upstream
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+=======
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.alerter.Led;
+>>>>>>> Stashed changes
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -77,6 +84,33 @@ public class Robot extends LoggedRobot {
         // Instantiate our RobotContainer. This will perform all our button bindings,
         // and put our autonomous chooser on the dashboard.
         robotContainer = new RobotContainer();
+<<<<<<< Updated upstream
+=======
+
+        // Register base states for LEDs
+        Led led = Led.getInstance();
+
+        led.register(
+            DriverStation::isDisabled,
+            Led.Mode.solid(255, 0, 0),
+            Led.Priority.IDLE
+        );
+        led.register(
+            DriverStation::isAutonomous,
+            Led.Mode.solid(0, 0, 255),
+            Led.Priority.IDLE
+        );
+        led.register(
+            DriverStation::isTeleop,
+            Led.Mode.solid(0, 255, 0),
+            Led.Priority.IDLE
+        );
+        led.register(
+            () -> !DriverStation.isDSAttached(),
+            Led.Mode.rainbow(),
+            Led.Priority.CONTEXT
+        );
+>>>>>>> Stashed changes
     }
 
     /** This function is called periodically during all modes. */

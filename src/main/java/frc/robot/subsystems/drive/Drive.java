@@ -84,12 +84,12 @@ public class Drive extends SubsystemBase {
     /** The Meta Quest 3S, our primary vision tool */
     final Quest quest;
 
-    /** List of measurements to callibrate the starting Pose from */
-    final List<VisionMeasurement> callibrators = new ArrayList<>();
+    /** List of measurements to calibrate the starting Pose from */
+    final List<VisionMeasurement> calibrators = new ArrayList<>();
 
-    /** PhotonVision, to callibrate the starting pose of the quest */
+    /** PhotonVision, to calibrate the starting pose of the quest */
     final Photon photon = new Photon(
-        this.callibrators::add,
+        this.calibrators::add,
         switch (Constants.currentMode) {
             case REAL -> data -> new CameraPhoton(data);
             default -> data -> new CameraReplay(data);
@@ -134,21 +134,22 @@ public class Drive extends SubsystemBase {
     }
 
     /**
-     * Callibrate the initial pose of the robot
+     * Calibrate the initial pose of the robot
      *
      * Photon/AprilTag measurements are recorded and collected while the robot is disabled.
      * Once enabled, we average the latest few measurements and set our starting pose to that.
      */
-    void callibrate() {
-        if (callibrators.isEmpty()) return;
+    private void calibrate() {
+        if (calibrators.isEmpty()) return;
 
-        // Average all callibrator measurements
+        // Average all calibrator measurements
         double x = 0;
         double y = 0;
         double sin = 0;
         double cos = 0;
+        int n = 0;
 
-        for (VisionMeasurement vm : callibrators) {
+        for (VisionMeasurement vm : calibrators) {
             double age = Timer.getFPGATimestamp() - vm.timestamp();
             if (age > 15) continue; // Ignore old measurements
 
@@ -158,9 +159,8 @@ public class Drive extends SubsystemBase {
             y += est.getY();
             sin += est.getRotation().getSin();
             cos += est.getRotation().getCos();
+            n++;
         }
-
-        int n = callibrators.size();
 
         x /= n;
         y /= n;
@@ -173,16 +173,16 @@ public class Drive extends SubsystemBase {
         this.setPose(avg);
 
         // Clear callibrators for next use
-        callibrators.clear();
+        calibrators.clear();
     }
 
     @Override
     public void periodic() {
-        // Collect updates when disabled; callibrate once enabled.
-        // although callibrate() is called many times, it only acts once
-        // since we clear the callibrators list at the end of the method.
+        // Collect updates when disabled; calibrate once enabled.
+        // although calibrate() is called many times, it only acts once
+        // since we clear the calibrators list at the end of the method.
         if (DriverStation.isDisabled()) photon.update();
-        else callibrate();
+        else calibrate();
 
         photon.update();
 
