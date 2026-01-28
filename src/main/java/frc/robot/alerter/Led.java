@@ -226,7 +226,7 @@ public class Led {
 
     /** Blink the LEDs with a specified color */
     private void blink(int r, int g, int b) {
-        boolean on = (Timer.getFPGATimestamp() / BLINK_INTERVAL) % 2 == 0;
+        boolean on = ((int)((Timer.getFPGATimestamp() / BLINK_INTERVAL) % 2)) == 0;
 
         if (on) solid(r, g, b);
         else solid(0, 0, 0);
