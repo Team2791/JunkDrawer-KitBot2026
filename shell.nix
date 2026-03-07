@@ -23,8 +23,6 @@ in
 
       openssl
       gcc
-
-      frc-nix.packages.x86_64-linux.glass
     ]);
 
   multiPkgs =

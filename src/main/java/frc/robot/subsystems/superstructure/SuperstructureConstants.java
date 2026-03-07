@@ -8,18 +8,23 @@
 package frc.robot.subsystems.superstructure;
 
 public class SuperstructureConstants {
-  public static final int feederCanId = 51;
-  public static final double feederMotorReduction = 1.0;
-  public static final int feederCurrentLimit = 60;
 
-  public static final int intakeLauncherCanId = 50;
-  public static final double intakeLauncherMotorReduction = 1.0;
-  public static final int intakeLauncherCurrentLimit = 60;
+    public static final int feederCanId = 51;
+    public static final double feederMotorReduction = 1.0;
+    public static final int feederCurrentLimit = 60;
 
-  public static final double intakingFeederVoltage = -5.0;
-  public static final double intakingIntakeVoltage = -10.0;
-  public static final double launchingFeederVoltage = -9.0;
-  public static final double launchingLauncherVoltage = 10.6;
-  public static final double spinUpFeederVoltage = -6.0;
-  public static final double spinUpSeconds = 1.0;
+    public static final int intakeLauncherCanId = 50;
+    public static final double intakeLauncherMotorReduction = 1.0;
+    public static final int intakeLauncherCurrentLimit = 60;
+
+    public static final double intakingFeederVoltage = -12.0;
+    public static final double intakingIntakeVoltage = 10.0;
+    public static final double launchingFeederVoltage = 12.0;
+    public static final double launchingLauncherVoltage = -10.6;
+    public static final double spinUpFeederVoltage = 6.0;
+    public static final double spinUpSeconds = 1.0;
+
+    public static final double kLauncherP = 1e-2;
+    public static final double kLauncherI = 1e-5;
+    public static final double kLauncherD = 1e-3;
 }

@@ -14,7 +14,9 @@ import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import java.util.function.DoubleSupplier;
@@ -33,7 +35,7 @@ public class SuperstructureIOSpark implements SuperstructureIO {
   public SuperstructureIOSpark() {
     var feederConfig = new SparkMaxConfig();
     feederConfig
-        .idleMode(IdleMode.kBrake)
+        .idleMode(IdleMode.kCoast)
         .smartCurrentLimit(feederCurrentLimit)
         .voltageCompensation(12.0);
     feederConfig
@@ -52,7 +54,7 @@ public class SuperstructureIOSpark implements SuperstructureIO {
 
     var intakeLauncherConfig = new SparkMaxConfig();
     intakeLauncherConfig
-        .idleMode(IdleMode.kBrake)
+        .idleMode(IdleMode.kCoast)
         .smartCurrentLimit(intakeLauncherCurrentLimit)
         .inverted(true)
         .voltageCompensation(12.0);
@@ -63,6 +65,10 @@ public class SuperstructureIOSpark implements SuperstructureIO {
         .velocityConversionFactor((2.0 * Math.PI) / 60.0 / intakeLauncherMotorReduction)
         .uvwMeasurementPeriod(10)
         .uvwAverageDepth(2);
+    intakeLauncherConfig
+        .closedLoop
+        .pid(kLauncherP, kLauncherI, kLauncherD)
+        .feedbackSensor(FeedbackSensor.kPrimaryEncoder);
     tryUntilOk(
         intakeLauncher,
         5,
@@ -107,7 +113,7 @@ public class SuperstructureIOSpark implements SuperstructureIO {
   }
 
   @Override
-  public void setIntakeLauncherVoltage(double volts) {
-    intakeLauncher.setVoltage(volts);
+  public void setLauncherVelocity(double radps) {
+    intakeLauncher.getClosedLoopController().setSetpoint(radps, ControlType.kVelocity);
   }
 }
