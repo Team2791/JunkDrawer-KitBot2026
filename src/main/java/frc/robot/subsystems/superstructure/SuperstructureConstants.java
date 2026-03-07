@@ -22,4 +22,8 @@ public class SuperstructureConstants {
   public static final double launchingLauncherVoltage = -10.6;
   public static final double spinUpFeederVoltage = 6.0;
   public static final double spinUpSeconds = 1.0;
+
+  public static final double kLauncherP = 1e-2;
+  public static final double kLauncherI = 1e-5;
+  public static final double kLauncherD = 1e-3;
 }

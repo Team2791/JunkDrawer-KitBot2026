@@ -29,6 +29,6 @@ public interface SuperstructureIO {
   /** Run the feeder at the specified voltage. */
   public default void setFeederVoltage(double volts) {}
 
-  /** Run the intake and launcher at the specified voltage. */
-  public default void setIntakeLauncherVoltage(double volts) {}
+  /** Run the intake and launcher at the specified rad/s. */
+  public default void setLauncherVelocity(double radps) {}
 }

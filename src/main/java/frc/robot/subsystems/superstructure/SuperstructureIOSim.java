@@ -53,7 +53,7 @@ public class SuperstructureIOSim implements SuperstructureIO {
   }
 
   @Override
-  public void setIntakeLauncherVoltage(double volts) {
-    intakeLauncherAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
+  public void setLauncherVelocity(double volts) {
+    // intakeLauncherAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
   }
 }
