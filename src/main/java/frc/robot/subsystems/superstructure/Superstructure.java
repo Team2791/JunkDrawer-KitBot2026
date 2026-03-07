@@ -13,6 +13,7 @@ import static frc.robot.subsystems.superstructure.SuperstructureConstants.launch
 import static frc.robot.subsystems.superstructure.SuperstructureConstants.spinUpFeederVoltage;
 import static frc.robot.subsystems.superstructure.SuperstructureConstants.spinUpSeconds;
 
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -24,6 +25,8 @@ public class Superstructure extends SubsystemBase {
 
   public Superstructure(SuperstructureIO io) {
     this.io = io;
+
+    SmartDashboard.putNumber("ShooterVel", 0);
   }
 
   @Override
@@ -31,7 +34,7 @@ public class Superstructure extends SubsystemBase {
     io.updateInputs(inputs);
     Logger.processInputs("Superstructure", inputs);
 
-     double vel = SmartDashboard.getNumber("SS/ShooterVel", 0);
+     double vel = SmartDashboard.getNumber("ShooterVel", 0);
     io.setLauncherVelocity(vel);
  
   }
@@ -66,19 +69,16 @@ public class Superstructure extends SubsystemBase {
   public Command launch() {
     return run(() -> {
           io.setFeederVoltage(spinUpFeederVoltage);
-          io.setLauncherVelocity(launchingLauncherVoltage);
         })
         .withTimeout(spinUpSeconds)
         .andThen(
             run(
                 () -> {
                   io.setFeederVoltage(launchingFeederVoltage);
-                  io.setLauncherVelocity(launchingLauncherVoltage);
                 }))
         .finallyDo(
             () -> {
               io.setFeederVoltage(0.0);
-              io.setLauncherVelocity(0.0);
             });
   }
 
