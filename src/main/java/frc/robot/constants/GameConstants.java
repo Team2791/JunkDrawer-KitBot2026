@@ -41,4 +41,22 @@ public class GameConstants {
         kFieldWidth,
         Rotation2d.kPi
     );
+
+    /** Game object reference poses defined in the blue-alliance coordinate frame. */
+    public static final class Objects {
+
+        private Objects() {}
+
+        /**
+         * Blue alliance hub (goal structure) pose.
+         *
+         * <p>The heading (180°) points outward from the hub toward the blue driver station,
+         * representing the direction the robot should face to shoot into the goal.
+         */
+        public static final Pose2d kHub = new Pose2d(
+            Inches.of(182.11).in(Meters),
+            Inches.of(158.84).in(Meters),
+            Rotation2d.fromDegrees(180)
+        );
+    }
 }

@@ -66,11 +66,11 @@ public final class ControlConstants {
         public static final double kOrthoD = 0.00;
 
         /** Proportional gain for alignment rotation error. */
-        public static final double kTurnP = 2.60;
+        public static final double kTurnP = 3.00;
         /** Integral gain for alignment rotation error. */
         public static final double kTurnI = 0.00;
         /** Derivative gain for alignment rotation error. */
-        public static final double kTurnD = 0.04;
+        public static final double kTurnD = 0.00;
 
         /** Maximum angular velocity during alignment (radians/second). TODO: May be increased. */
         public static final double kMaxTurnVelocity = kTau;

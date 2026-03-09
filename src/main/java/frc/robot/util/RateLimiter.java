@@ -44,20 +44,14 @@ public class RateLimiter {
         rotLimiter = new SlewRateLimiter(rotRate);
     }
 
-    /**
-     * Calculates rate-limited velocities based on the provided inputs.
-     *
-     * Each component of velocity is passed through its corresponding slew rate limiter,
-     * which constrains the acceleration to the configured maximum rates.
-     *
-     * @param speed The requested velocity as a Vec2, where each component is in [-1, 1]
-     * @param rot The requested rotational velocity in [-1, 1]
-     * @return An Outputs record containing the rate-limited velocities
-     */
-    public Outputs calculate(Vec2 speed, double rot) {
-        return new Outputs(
-            new Vec2(xLimiter.calculate(speed.x), yLimiter.calculate(speed.y)),
-            rotLimiter.calculate(rot)
+    public Vec2 calculateXY(Vec2 speed) {
+        return new Vec2(
+            xLimiter.calculate(speed.x),
+            yLimiter.calculate(speed.y)
         );
+    }
+
+    public double calculateRot(double rot) {
+        return rotLimiter.calculate(rot);
     }
 }

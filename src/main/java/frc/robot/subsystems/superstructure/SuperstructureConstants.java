@@ -18,13 +18,13 @@ public class SuperstructureConstants {
     public static final int intakeLauncherCurrentLimit = 60;
 
     public static final double intakingFeederVoltage = -12.0;
+    public static final double intakingLauncherVelocity = -550;
     public static final double intakingIntakeVoltage = 10.0;
     public static final double launchingFeederVoltage = 12.0;
-    public static final double launchingLauncherVoltage = -10.6;
-    public static final double spinUpFeederVoltage = 6.0;
+    public static final double launchingLauncherVelocity = -410;
     public static final double spinUpSeconds = 1.0;
 
-    public static final double kLauncherP = 1e-2;
-    public static final double kLauncherI = 1e-5;
-    public static final double kLauncherD = 1e-3;
+    public static final double kLauncherP = 9e-3;
+    public static final double kLauncherI = 4e-6;
+    public static final double kLauncherD = 5e-3;
 }

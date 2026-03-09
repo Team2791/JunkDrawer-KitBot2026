@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.alerter.Rumbler;
 import frc.robot.auto.AutoSelector;
 import frc.robot.commands.drive.JoystickDrive;
+import frc.robot.commands.drive.PointAtHub;
 import frc.robot.constants.IOConstants;
 import frc.robot.constants.RuntimeConstants;
 import frc.robot.subsystems.drive.Drive;
@@ -116,7 +117,7 @@ public class RobotContainer {
 
         // Control bindings for superstructure
         driverctl.leftBumper().whileTrue(superstructure.intake());
-        driverctl.rightBumper().whileTrue(superstructure.launch());
+        driverctl.y().whileTrue(new PointAtHub(drive, driverctl));
         driverctl.a().whileTrue(superstructure.eject());
 
         // Reset gyro to 0° when B button is pressed

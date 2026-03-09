@@ -11,6 +11,7 @@ import frc.robot.util.AllianceUtil;
 import frc.robot.util.RateLimiter;
 import frc.robot.util.Vec2;
 import java.util.Optional;
+import org.littletonrobotics.junction.Logger;
 
 /**
  * Command for driving the robot using joystick input from an Xbox controller.
@@ -48,28 +49,16 @@ public class JoystickDrive extends Command {
         addRequirements(drive);
     }
 
-    @Override
-    public void execute() {
+    Vec2 linear() {
         Vec2 linear = new Vec2(ctl.getLeftX(), ctl.getLeftY());
-
-        // apply deadband to joystick inputs
-        double linearMag = MathUtil.applyDeadband(
+        double mag = MathUtil.applyDeadband(
             linear.mag(),
             IOConstants.Controller.kDeadband
         );
-        double rot = MathUtil.applyDeadband(
-            ctl.getRightX(),
-            IOConstants.Controller.kDeadband
-        );
 
-        Vec2 input = linear.norm().mul(linearMag);
-
-        // apply squared inputs for finer control at low speeds
+        Vec2 input = linear.norm().mul(mag);
         Vec2 input2 = input.mul(input.abs());
-        double rot2 = rot * Math.abs(rot);
-
-        // apply rate limiting for smooth acceleration
-        RateLimiter.Outputs limited = slew.calculate(input2, rot2);
+        Vec2 limited = slew.calculateXY(input2);
 
         /*
          * Controller to WPI coordinate system conversion:
@@ -77,15 +66,12 @@ public class JoystickDrive extends Command {
          * Controller coordinates:    WPI coordinates:
          *   +X = right                 +X = forward
          *   +Y = down                  +Y = left
-         *   +Rot = clockwise           +Rot = counter-clockwise
          *
          * Transformation needed:
          *   +Yc -> -Xw  (down stick -> forward motion negation)
          *   +Xc -> -Yw  (right stick -> left motion negation)
-         *   +Rotc -> -Rotw (negate rotation for ccw-positive)
          */
-        Vec2 linearcmd = new Vec2(-limited.vel().y, -limited.vel().x);
-        double rotcmd = -limited.rot();
+        Vec2 cmd = new Vec2(-limited.y, -limited.x);
 
         /*
          * Field-centric drive coordinate transformation based on alliance color.
@@ -99,15 +85,36 @@ public class JoystickDrive extends Command {
          *   - Linear commands must be inverted to maintain driver perspective
          *   - This ensures drivers have consistent controls regardless of alliance color
          */
-        Optional<Boolean> invert = AllianceUtil.invert();
-        if (invert.orElse(false)) linearcmd = linearcmd.neg(); // invert for Red alliance, skip if no FMS/DS
+        Optional<Boolean> invert = AllianceUtil.invert().map(n -> !n);
+        if (invert.orElse(false)) cmd = cmd.neg(); // invert for Red alliance, skip if no FMS/DS
 
-        // scale to max speeds
-        Vec2 vel = linearcmd.mul(ControlConstants.Drivetrain.MaxSpeed.kLinear);
-        double omega = rotcmd * ControlConstants.Drivetrain.MaxSpeed.kAngular;
+        // scale to max speed
+        Vec2 vel = cmd.mul(ControlConstants.Drivetrain.MaxSpeed.kLinear);
 
-        // no need to speed limit for diagonals, drive.runVelocity() handles that.
-        // just send the desired chassis speeds
+        return vel;
+    }
+
+    double rot() {
+        double rot = MathUtil.applyDeadband(
+            ctl.getRightX(),
+            IOConstants.Controller.kDeadband
+        );
+
+        double rot2 = rot * Math.abs(rot);
+        double limited = slew.calculateRot(rot2);
+        double omega = limited * ControlConstants.Drivetrain.MaxSpeed.kAngular;
+
+        return omega;
+    }
+
+    @Override
+    public void execute() {
+        Vec2 vel = linear();
+        double omega = rot();
+
+        Logger.recordOutput("JSD/vel", vel);
+        Logger.recordOutput("JSD/omeg", omega);
+
         drive.drive(new ChassisSpeeds(vel.x, vel.y, omega));
     }
 }

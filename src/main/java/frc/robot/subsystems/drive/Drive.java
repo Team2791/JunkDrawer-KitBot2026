@@ -16,6 +16,8 @@ import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -29,6 +31,8 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.constants.GameConstants;
+import frc.robot.constants.RobotConstants;
 import frc.robot.constants.RuntimeConstants;
 import frc.robot.constants.RuntimeConstants.Mode;
 import frc.robot.subsystems.photon.CameraPhoton;
@@ -46,6 +50,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.Logger;
 
 public class Drive extends SubsystemBase {
@@ -77,7 +82,17 @@ public class Drive extends SubsystemBase {
             kinematics,
             rawGyroRotation,
             lastModulePositions,
-            Pose2d.kZero
+            new Pose2d(
+                GameConstants.kRedOrigin
+                    .getTranslation()
+                    .minus(
+                        new Translation2d(
+                            RobotConstants.DriveBase.kBumperLength / 2 + .127,
+                            RobotConstants.DriveBase.kBumperWidth / 2
+                        )
+                    ),
+                Rotation2d.kZero
+            )
         );
 
     /** the QuestNav used for primary vision things */
@@ -138,6 +153,8 @@ public class Drive extends SubsystemBase {
                 this
             )
         );
+
+        AutoLogOutputManager.addObject(this);
     }
 
     @Override

@@ -3,6 +3,10 @@ package frc.robot.util;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.util.struct.Struct;
+import edu.wpi.first.util.struct.StructSerializable;
+import java.nio.ByteBuffer;
 
 /**
  * A 2D vector class for representing and manipulating 2D coordinates and directions.
@@ -14,7 +18,48 @@ import edu.wpi.first.math.geometry.Translation2d;
  * <p>The class is immutable, meaning all operations return new Vec2 instances rather than
  * modifying the original object.
  */
-public class Vec2 {
+public class Vec2 implements StructSerializable {
+
+    public static class Vec2Struct implements Struct<Vec2> {
+
+        @Override
+        public Class<Vec2> getTypeClass() {
+            return Vec2.class;
+        }
+
+        @Override
+        public String getTypeName() {
+            return "Vec2";
+        }
+
+        @Override
+        public int getSize() {
+            return kSizeDouble * 2;
+        }
+
+        @Override
+        public String getSchema() {
+            return "double x; double y";
+        }
+
+        @Override
+        public Vec2 unpack(ByteBuffer bb) {
+            double x = bb.getDouble();
+            double y = bb.getDouble();
+            return new Vec2(x, y);
+        }
+
+        @Override
+        public void pack(ByteBuffer bb, Vec2 value) {
+            bb.putDouble(value.x);
+            bb.putDouble(value.y);
+        }
+
+        @Override
+        public boolean isImmutable() {
+            return true;
+        }
+    }
 
     /** The X component of the vector. */
     public final double x;
@@ -71,6 +116,16 @@ public class Vec2 {
      */
     public Vec2(Pose2d pose) {
         this(pose.getTranslation());
+    }
+
+    /**
+     * Constructs a Vec2 from the translational components of a {@link ChassisSpeeds}.
+     *
+     * @param speeds the chassis speeds (vx and vy are used; omega is ignored)
+     */
+    public Vec2(ChassisSpeeds speeds) {
+        this.x = speeds.vxMetersPerSecond;
+        this.y = speeds.vyMetersPerSecond;
     }
 
     /**
@@ -262,4 +317,7 @@ public class Vec2 {
     public double mag2() {
         return this.dot(this);
     }
+
+    /** Vec2 struct for WPI serialization */
+    public static final Vec2Struct struct = new Vec2Struct();
 }
