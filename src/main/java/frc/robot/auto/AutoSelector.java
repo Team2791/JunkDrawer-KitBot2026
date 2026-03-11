@@ -46,7 +46,6 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class AutoSelector {
 
     final AutoFactory factory;
-    final SampleFollower follower;
     final AutoGraph graph = new AutoGraph();
     final List<AutoNode> current = new ArrayList<>();
 
@@ -59,11 +58,10 @@ public class AutoSelector {
      * @see AutoSelector
      */
     public AutoSelector(Drive drive) {
-        follower = new SampleFollower(drive);
         factory = new AutoFactory(
             drive::getPose,
             drive::setPose,
-            follower::follow,
+            drive.follower::follow,
             true,
             drive,
             (traj, starting) -> {
@@ -100,7 +98,7 @@ public class AutoSelector {
         add(s0, AutoNode.POS3);
         add(s0, AutoNode.CANCEL);
 
-        s0.onChange(null);
+        s0.onChange(node -> update(0, node));
     }
 
     /**
@@ -112,7 +110,23 @@ public class AutoSelector {
         c.addOption(n.label(), n);
     }
 
+    /**
+     * Called when chooser {@code n} changes to {@code change}.
+     *
+     * <ol>
+     *   <li>Trims all selections and choosers after index {@code n}.
+     *   <li>Records the new selection at index {@code n}.
+     *   <li>Populates the next chooser with valid graph transitions from {@code change},
+     *       plus a {@link AutoNode#CANCEL} stop option.
+     *   <li>Registers this method recursively as the next chooser's change listener.
+     * </ol>
+     *
+     * @param n      The index of the chooser that changed (0-based)
+     * @param change The newly selected {@link AutoNode}
+     */
     public void update(int n, AutoNode change) {
+        if (n >= NUM_CHOOSERS - 1) return; // if last chooser changed, no next chooser to update
+
         if (current.size() > n) {
             cutoff(n + 1); // reset subsequent choosers and selections
             current.remove(n); // remove current selection at index n (last index)
@@ -150,11 +164,12 @@ public class AutoSelector {
 
     /**
      * Helper method to create a LoggedDashboardChooser for AutoNode selections.
-     * @param name Name of the chooser for dashboard display
+     * @param n The index of the chooser (used for naming and identification)
      * @return A new LoggedDashboardChooser instance
      */
     private LoggedDashboardChooser<AutoNode> chooser(int n) {
-        return new LoggedDashboardChooser<>("Auto Selector " + (n + 1));
+        if (n == 0) return new LoggedDashboardChooser<>("Auto/StartPos");
+        else return new LoggedDashboardChooser<>("Auto/Task" + n);
     }
 
     /**

@@ -11,7 +11,7 @@ import edu.wpi.first.units.measure.*;
  * in the Choreo GUI.
  */
 public final class ChoreoVars {
-    public static final Distance balls_top = Units.Meters.of(6.345);
+    public static final Distance balls_bottom = Units.Meters.of(1.725);
     public static final Distance balls_width = Units.Meters.of(4.62);
     public static final Distance climber_halfwidth = Units.Meters.of(0.432);
     public static final Distance climber_length = Units.Meters.of(1.105);

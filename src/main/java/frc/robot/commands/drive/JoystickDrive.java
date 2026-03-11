@@ -85,7 +85,7 @@ public class JoystickDrive extends Command {
          *   - Linear commands must be inverted to maintain driver perspective
          *   - This ensures drivers have consistent controls regardless of alliance color
          */
-        Optional<Boolean> invert = AllianceUtil.invert().map(n -> !n);
+        Optional<Boolean> invert = AllianceUtil.invert();
         if (invert.orElse(false)) cmd = cmd.neg(); // invert for Red alliance, skip if no FMS/DS
 
         // scale to max speed
@@ -102,7 +102,18 @@ public class JoystickDrive extends Command {
 
         double rot2 = rot * Math.abs(rot);
         double limited = slew.calculateRot(rot2);
-        double omega = limited * ControlConstants.Drivetrain.MaxSpeed.kAngular;
+
+        /*
+         * Controller to WPI coordinate system conversion:
+         *
+         * Controller coordinates:    WPI coordinates:
+         *   +Rot = clockwise           +Rot = counter-clockwise
+         *
+         * Transformation needed:
+         *   +Rotc -> -Rotw (negate rotation for ccw-positive)
+         */
+        double rotcmd = -limited;
+        double omega = rotcmd * ControlConstants.Drivetrain.MaxSpeed.kAngular;
 
         return omega;
     }

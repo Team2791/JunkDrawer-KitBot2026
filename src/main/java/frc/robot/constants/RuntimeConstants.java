@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj.RobotBase;
  */
 public final class RuntimeConstants {
 
-    public static final Mode kSimType = Mode.REPLAY;
+    public static final Mode kSimType = Mode.SIM;
     public static final Mode kCurrentMode = RobotBase.isReal()
         ? Mode.REAL
         : kSimType;

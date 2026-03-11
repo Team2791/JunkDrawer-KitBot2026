@@ -9,11 +9,15 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.alerter.Rumbler;
 import frc.robot.auto.AutoSelector;
+import frc.robot.commands.drive.DriveCommands;
 import frc.robot.commands.drive.JoystickDrive;
 import frc.robot.commands.drive.PointAtHub;
 import frc.robot.constants.IOConstants;
@@ -71,30 +75,32 @@ public class RobotContainer {
     // Auto selector
     final AutoSelector selector = new AutoSelector(drive);
 
+    // final SendableChooser<Command> sysid = new SendableChooser<>();
+
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
         // Set up SysId routines
-        // autoChooser.addOption(
+        // sysid.addOption(
         //     "Drive Wheel Radius Characterization",
         //     DriveCommands.wheelRadiusCharacterization(drive)
         // );
-        // autoChooser.addOption(
+        // sysid.addOption(
         //     "Drive Simple FF Characterization",
         //     DriveCommands.feedforwardCharacterization(drive)
         // );
-        // autoChooser.addOption(
+        // sysid.addOption(
         //     "Drive SysId (Quasistatic Forward)",
         //     drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward)
         // );
-        // autoChooser.addOption(
+        // sysid.addOption(
         //     "Drive SysId (Quasistatic Reverse)",
         //     drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse)
         // );
-        // autoChooser.addOption(
+        // sysid.addOption(
         //     "Drive SysId (Dynamic Forward)",
         //     drive.sysIdDynamic(SysIdRoutine.Direction.kForward)
         // );
-        // autoChooser.addOption(
+        // sysid.addOption(
         //     "Drive SysId (Dynamic Reverse)",
         //     drive.sysIdDynamic(SysIdRoutine.Direction.kReverse)
         // );
@@ -103,6 +109,7 @@ public class RobotContainer {
         configureButtonBindings();
 
         Rumbler.getInstance().provideControllers(driverctl, operctl);
+        // SmartDashboard.putData("SYSID", sysid);
     }
 
     /**

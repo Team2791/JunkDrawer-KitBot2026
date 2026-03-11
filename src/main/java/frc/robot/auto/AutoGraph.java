@@ -47,6 +47,12 @@ public class AutoGraph {
             out.get(from).put(to, traj);
         }
 
+        for (AutoNode from : out.keySet()) {
+            System.out.print(from.toString() + " -> ");
+            Set<AutoNode> tos = out.get(from).keySet();
+            System.out.println(tos);
+        }
+
         return out;
     }
 

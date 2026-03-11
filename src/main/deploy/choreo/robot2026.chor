@@ -4,11 +4,11 @@
  "type":"Swerve",
  "variables":{
   "expressions":{
-   "balls_top":{
+   "balls_bottom":{
     "dimension":"Length",
     "var":{
-     "exp":"field_width / 2 + balls_width / 2",
-     "val":6.344793
+     "exp":"field_width / 2 - balls_width / 2",
+     "val":1.724533
     }
    },
    "balls_width":{

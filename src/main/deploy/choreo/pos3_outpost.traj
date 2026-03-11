@@ -14,7 +14,8 @@
  "params":{
   "waypoints":[
     {"x":{"exp":"startline_bot + robot_size", "val":4.416043999999999}, "y":{"exp":"endpos_inset", "val":0.66675}, "heading":{"exp":"-90 deg", "val":-1.5707963267948966}, "intervals":22, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"robot_padding", "val":0.51435}, "y":{"exp":"outpost", "val":0.6659879999999999}, "heading":{"exp":"-90 deg", "val":-1.5707963267948966}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
+    {"x":{"exp":"robot_padding", "val":0.51435}, "y":{"exp":"outpost", "val":0.6659879999999999}, "heading":{"exp":"-90 deg", "val":-1.5707963267948966}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"12.495235443115234 m", "val":12.495235443115234}, "y":{"exp":"0.07952824234962463 m", "val":0.07952824234962463}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},

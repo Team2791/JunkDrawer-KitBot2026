@@ -31,14 +31,14 @@ public enum AutoNode {
      */
     String label() {
         return switch (this) {
-            case POS1 -> "Position 1 and Shoot";
+            case POS1 -> "Position 1";
             case POS2 -> "Position 2 and Shoot";
-            case POS3 -> "Position 3";
+            case POS3 -> "Position 3 and Shoot";
             case DEPOT -> "Depot, Intake, and Shoot";
             case OUTPOST -> "Outpost, Intake, and Shoot";
             case CLIMB -> "Climb";
             case CENTER -> "Center and Collection";
-            case CANCEL -> "Stop there";
+            case CANCEL -> "Stop/Cancel";
         };
     }
 
@@ -52,7 +52,7 @@ public enum AutoNode {
      */
     Command onEnter(AutoRoutine routine) {
         return switch (this) {
-            case POS1, POS2 -> Commands.sequence(
+            case POS3, POS2 -> Commands.sequence(
                 // TODO: shoot all balls
                 new InstantCommand()
             );
@@ -82,7 +82,7 @@ public enum AutoNode {
                 // TODO: stop intake
                 new InstantCommand()
             );
-            case POS3, CANCEL -> Commands.none();
+            case POS1, CANCEL -> Commands.none();
         };
     }
 }

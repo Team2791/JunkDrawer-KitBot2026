@@ -24,12 +24,12 @@ public record ChoreoTraj(
     Pose2d initialPoseBlue,
     Pose2d endPoseBlue
 ) {
-    public static final ChoreoTraj pos2_depot = new ChoreoTraj(
-	    "pos2_depot",
+    public static final ChoreoTraj center_pos3 = new ChoreoTraj(
+	    "center_pos3",
 	    OptionalInt.empty(),
-	    1.28133,
-	    new Pose2d(3.489, 4.035, Rotation2d.fromRadians(0)),
-	    new Pose2d(0.514, 7.013, Rotation2d.fromRadians(0))
+	    1.47008,
+	    new Pose2d(7.705, 4.035, Rotation2d.fromRadians(3.142)),
+	    new Pose2d(4.416, 0.667, Rotation2d.fromRadians(1.571))
 	);
 	public static final ChoreoTraj depot_climb = new ChoreoTraj(
 	    "depot_climb",
@@ -45,6 +45,20 @@ public record ChoreoTraj(
 	    new Pose2d(0.514, 0.666, Rotation2d.fromRadians(-1.571)),
 	    new Pose2d(1.645, 3.314, Rotation2d.fromRadians(0))
 	);
+	public static final ChoreoTraj pos1_depot = new ChoreoTraj(
+	    "pos1_depot",
+	    OptionalInt.empty(),
+	    1.3822,
+	    new Pose2d(4.416, 7.403, Rotation2d.fromRadians(-1.571)),
+	    new Pose2d(0.514, 7.013, Rotation2d.fromRadians(0))
+	);
+	public static final ChoreoTraj pos2_depot = new ChoreoTraj(
+	    "pos2_depot",
+	    OptionalInt.empty(),
+	    1.28133,
+	    new Pose2d(3.489, 4.035, Rotation2d.fromRadians(0)),
+	    new Pose2d(0.514, 7.013, Rotation2d.fromRadians(0))
+	);
 	public static final ChoreoTraj pos2_outpost = new ChoreoTraj(
 	    "pos2_outpost",
 	    OptionalInt.empty(),
@@ -52,19 +66,12 @@ public record ChoreoTraj(
 	    new Pose2d(3.489, 4.035, Rotation2d.fromRadians(0)),
 	    new Pose2d(0.514, 0.666, Rotation2d.fromRadians(0))
 	);
-	public static final ChoreoTraj seq_depot_intake = new ChoreoTraj(
-	    "seq_depot_intake",
+	public static final ChoreoTraj pos3_center = new ChoreoTraj(
+	    "pos3_center",
 	    OptionalInt.empty(),
-	    1.17687,
-	    new Pose2d(0.514, 7.013, Rotation2d.fromRadians(0)),
-	    new Pose2d(0.514, 5.432, Rotation2d.fromRadians(0))
-	);
-	public static final ChoreoTraj pos1_depot = new ChoreoTraj(
-	    "pos1_depot",
-	    OptionalInt.empty(),
-	    1.3822,
-	    new Pose2d(4.416, 7.403, Rotation2d.fromRadians(-1.571)),
-	    new Pose2d(0.514, 7.013, Rotation2d.fromRadians(0))
+	    1.10573,
+	    new Pose2d(4.416, 0.667, Rotation2d.fromRadians(1.571)),
+	    new Pose2d(7.705, 1.21, Rotation2d.fromRadians(3.142))
 	);
 	public static final ChoreoTraj pos3_outpost = new ChoreoTraj(
 	    "pos3_outpost",
@@ -73,26 +80,19 @@ public record ChoreoTraj(
 	    new Pose2d(4.416, 0.667, Rotation2d.fromRadians(-1.571)),
 	    new Pose2d(0.514, 0.666, Rotation2d.fromRadians(-1.571))
 	);
-	public static final ChoreoTraj pos1_center = new ChoreoTraj(
-	    "pos1_center",
-	    OptionalInt.empty(),
-	    1.13178,
-	    new Pose2d(4.416, 7.403, Rotation2d.fromRadians(-1.571)),
-	    new Pose2d(7.705, 6.859, Rotation2d.fromRadians(0))
-	);
 	public static final ChoreoTraj seq_center_intake = new ChoreoTraj(
 	    "seq_center_intake",
 	    OptionalInt.empty(),
 	    2.00608,
-	    new Pose2d(7.705, 6.859, Rotation2d.fromRadians(0)),
+	    new Pose2d(7.705, 1.21, Rotation2d.fromRadians(0)),
 	    new Pose2d(7.705, 4.035, Rotation2d.fromRadians(0))
 	);
-	public static final ChoreoTraj center_pos1 = new ChoreoTraj(
-	    "center_pos1",
+	public static final ChoreoTraj seq_depot_intake = new ChoreoTraj(
+	    "seq_depot_intake",
 	    OptionalInt.empty(),
-	    1.5094,
-	    new Pose2d(7.705, 4.035, Rotation2d.fromRadians(0)),
-	    new Pose2d(4.416, 7.403, Rotation2d.fromRadians(-1.571))
+	    1.17687,
+	    new Pose2d(0.514, 7.013, Rotation2d.fromRadians(0)),
+	    new Pose2d(0.514, 5.432, Rotation2d.fromRadians(0))
 	);
 
     /**
@@ -100,16 +100,16 @@ public record ChoreoTraj(
      * This allows for trajectory data to be looked up with strings during runtime.
      */
     public static final Map<String, ChoreoTraj> ALL_TRAJECTORIES = Map.ofEntries(
-    	Map.entry("pos2_depot", pos2_depot),
+    	Map.entry("center_pos3", center_pos3),
 		Map.entry("depot_climb", depot_climb),
 		Map.entry("outpost_climb", outpost_climb),
-		Map.entry("pos2_outpost", pos2_outpost),
-		Map.entry("seq_depot_intake", seq_depot_intake),
 		Map.entry("pos1_depot", pos1_depot),
+		Map.entry("pos2_depot", pos2_depot),
+		Map.entry("pos2_outpost", pos2_outpost),
+		Map.entry("pos3_center", pos3_center),
 		Map.entry("pos3_outpost", pos3_outpost),
-		Map.entry("pos1_center", pos1_center),
 		Map.entry("seq_center_intake", seq_center_intake),
-		Map.entry("center_pos1", center_pos1)
+		Map.entry("seq_depot_intake", seq_depot_intake)
     );
 
     /**
