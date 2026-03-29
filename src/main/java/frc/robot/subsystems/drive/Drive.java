@@ -24,6 +24,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -32,8 +33,8 @@ import frc.robot.Constants.Mode;
 import frc.robot.subsystems.quest.Meta3S;
 import frc.robot.subsystems.quest.Quest;
 import frc.robot.subsystems.quest.QuestReplay;
+import frc.robot.util.Vec2;
 import frc.robot.util.VisionMeasurement;
-
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -51,6 +52,9 @@ public class Drive extends SubsystemBase {
     "Disconnected gyro, using kinematics as fallback.",
     AlertType.kError
   );
+
+  /** Field widget object */
+  final Field2d field = new Field2d();
 
   private SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
     moduleTranslations
@@ -183,14 +187,38 @@ public class Drive extends SubsystemBase {
     gyroDisconnectedAlert.set(
       !gyroInputs.connected && Constants.currentMode != Mode.SIM
     );
+
+    field.setRobotPose(getPose());
+  }
+
+  public Field2d getField() {
+    return field;
   }
 
   /**
-   * Runs the drive at the desired velocity.
+   * Runs the drive at the desired robot-relative velocities.
    *
    * @param speeds Speeds in meters/sec
+   * @see #drive(ChassisSpeeds) <code>drive()</code> for field-relative driving
    */
   public void runVelocity(ChassisSpeeds speeds) {
+    Vec2 velocity = new Vec2(
+      speeds.vxMetersPerSecond,
+      speeds.vyMetersPerSecond
+    );
+
+    // Limit to maximum linear speed, if necessary
+    // Can't limit components: <100% vx, 100%vy> = sqrt(2)*100% total speed
+    if (velocity.mag() > getMaxLinearSpeedMetersPerSec()) {
+      velocity = velocity.norm().mul(getMaxLinearSpeedMetersPerSec());
+      speeds.vxMetersPerSecond = velocity.x;
+      speeds.vyMetersPerSecond = velocity.y;
+    }
+
+    if (speeds.omegaRadiansPerSecond > getMaxAngularSpeedRadPerSec()) {
+      speeds.omegaRadiansPerSecond = getMaxAngularSpeedRadPerSec();
+    }
+
     // Calculate module setpoints
     ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
     SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(
@@ -212,6 +240,16 @@ public class Drive extends SubsystemBase {
 
     // Log optimized setpoints (runSetpoint mutates each state)
     Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStates);
+  }
+
+  /**
+   * Commands swerve drive, field-relative with specified speeds.
+   *
+   * @param speeds The desired chassis speeds
+   * @see #runVelocity(ChassisSpeeds) <code>runVelocity()</code> for robot-relative driving
+   */
+  public void drive(ChassisSpeeds speeds) {
+    runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, getRotation()));
   }
 
   /** Runs the drive in a straight line with the specified drive output. */
@@ -274,7 +312,7 @@ public class Drive extends SubsystemBase {
 
   /** Returns the measured chassis speeds of the robot. */
   @AutoLogOutput(key = "SwerveChassisSpeeds/Measured")
-  private ChassisSpeeds getChassisSpeeds() {
+  public ChassisSpeeds getChassisSpeeds() {
     return kinematics.toChassisSpeeds(getModuleStates());
   }
 
@@ -313,9 +351,7 @@ public class Drive extends SubsystemBase {
   }
 
   /** Adds a new timestamped vision measurement. */
-  public void addVisionMeasurement(
-    VisionMeasurement measurement
-  ) {
+  public void addVisionMeasurement(VisionMeasurement measurement) {
     poseEstimator.addVisionMeasurement(
       measurement.estimate2(),
       measurement.timestamp(),
